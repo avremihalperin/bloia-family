@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { getFamilyDbToken } from "@/lib/family-session";
+import { getFamilyDbToken, verifyFamilySession } from "@/lib/family-session";
+import { getAdminDbToken, verifyAdminSession } from "@/lib/admin-session";
 import { createAdminClient, hasAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { isCurrentUserAdmin, getProfile } from "@/lib/data";
@@ -152,7 +153,8 @@ export async function createInvitation(parentPersonId: string) {
 
 export async function registerViaInvitation(
   inviteToken: string,
-  data: PersonFormData
+  data: PersonFormData,
+  photoFile?: File | null
 ) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -173,43 +175,116 @@ export async function registerViaInvitation(
   });
 
   if (error) throw error;
+  if (photoFile) await uploadPhotoForNewPerson(person.id, photoFile);
   revalidatePath("/");
   return person;
 }
 
-export async function uploadPhoto(personId: string, formData: FormData) {
+async function getSessionTokenForUpload() {
+  const adminToken = await getAdminDbToken();
+  if (adminToken && (await verifyAdminSession())) return adminToken;
+  const familyToken = await getFamilyDbToken();
+  if (familyToken && (await verifyFamilySession())) return familyToken;
+  return null;
+}
+
+async function uploadImageToStorage(bucket: string, path: string, file: File) {
+  const sessionToken = await getSessionTokenForUpload();
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("נדרשת התחברות");
+  const client =
+    sessionToken && hasAdminClient() ? createAdminClient() : supabase;
 
-  const profile = await getProfile();
-  const canEdit =
-    profile?.person_id === personId || profile?.is_admin;
+  const { error } = await client.storage.from(bucket).upload(path, file, {
+    upsert: true,
+  });
+  if (error) throw error;
 
-  if (!canEdit) throw new Error("אין הרשאה");
+  const { data: { publicUrl } } = client.storage.from(bucket).getPublicUrl(path);
+  return publicUrl;
+}
 
+export async function uploadPersonPhoto(personId: string, formData: FormData) {
   const file = formData.get("photo") as File;
   if (!file) throw new Error("לא נבחר קובץ");
 
+  const sessionToken = await getSessionTokenForUpload();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  let allowed = Boolean(sessionToken);
+
+  if (!allowed && user) {
+    const profile = await getProfile();
+    allowed =
+      profile?.person_id === personId ||
+      profile?.is_admin ||
+      false;
+  }
+
+  if (!allowed) throw new Error("אין הרשאה להעלאת תמונה");
+
   const ext = file.name.split(".").pop() || "jpg";
-  const path = `${personId}/${Date.now()}.${ext}`;
+  const publicUrl = await uploadImageToStorage(
+    "family-photos",
+    `people/${personId}/${Date.now()}.${ext}`,
+    file
+  );
 
-  const { error: uploadError } = await supabase.storage
-    .from("avatars")
-    .upload(path, file, { upsert: true });
+  if (sessionToken) {
+    const { error } = await supabase.rpc("update_person_photo_via_session", {
+      session_token: sessionToken,
+      p_person_id: personId,
+      p_photo_url: publicUrl,
+    });
+    if (error) throw error;
+  } else {
+    const { error } = await supabase
+      .from("people")
+      .update({ photo_url: publicUrl })
+      .eq("id", personId);
+    if (error) throw error;
+  }
 
-  if (uploadError) throw uploadError;
-
-  const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path);
-
-  const { error: updateError } = await supabase
-    .from("people")
-    .update({ photo_url: publicUrl })
-    .eq("id", personId);
-
-  if (updateError) throw updateError;
   revalidatePath(`/person/${personId}`);
+  revalidatePath("/");
   return publicUrl;
+}
+
+export async function uploadBranchPhoto(branchId: string, formData: FormData) {
+  const file = formData.get("photo") as File;
+  if (!file) throw new Error("לא נבחר קובץ");
+
+  const sessionToken = await getSessionTokenForUpload();
+  if (!sessionToken) throw new Error("נדרשת הרשאת מנהל");
+
+  const ext = file.name.split(".").pop() || "jpg";
+  const publicUrl = await uploadImageToStorage(
+    "family-photos",
+    `branches/${branchId}/${Date.now()}.${ext}`,
+    file
+  );
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("update_branch_photo_via_session", {
+    session_token: sessionToken,
+    p_branch_id: branchId,
+    p_photo_url: publicUrl,
+  });
+  if (error) throw error;
+
+  revalidatePath("/admin/seed");
+  revalidatePath("/");
+  return publicUrl;
+}
+
+export async function uploadPhotoForNewPerson(personId: string, file: File) {
+  const formData = new FormData();
+  formData.append("photo", file);
+  return uploadPersonPhoto(personId, formData);
+}
+
+export async function uploadPhoto(personId: string, formData: FormData) {
+  return uploadPersonPhoto(personId, formData);
 }
 
 export async function linkSpouses(personId: string, spouseId: string) {
@@ -236,19 +311,28 @@ export async function linkSpouses(personId: string, spouseId: string) {
   revalidatePath("/");
 }
 
-export async function createGen1Person(data: PersonFormData) {
-  return createPerson({ ...data, generation: 1 });
+export async function createGen1Person(data: PersonFormData, photoFile?: File | null) {
+  const person = await createPerson({ ...data, generation: 1 });
+  if (photoFile) await uploadPhotoForNewPerson(person.id, photoFile);
+  return person;
 }
 
-export async function createGen2Person(data: PersonFormData) {
-  return createPerson({ ...data, generation: 2 });
+export async function createGen2Person(data: PersonFormData, photoFile?: File | null) {
+  const person = await createPerson({ ...data, generation: 2 });
+  if (photoFile) await uploadPhotoForNewPerson(person.id, photoFile);
+  return person;
 }
 
 export async function updatePersonAction(id: string, data: PersonFormData) {
   await updatePerson(id, data);
 }
 
-export async function addChildAction(parentId: string, data: PersonFormData) {
+export async function addChildAction(
+  parentId: string,
+  data: PersonFormData,
+  photoFile?: File | null
+) {
   const child = await createPerson({ ...data, parent_id: parentId });
+  if (photoFile) await uploadPhotoForNewPerson(child.id, photoFile);
   redirect(`/person/${child.id}`);
 }

@@ -1,14 +1,31 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fffbeb;
-  --foreground: #1c1917;
+  --background: #f8f5f0;
+  --foreground: #1c1814;
+  --gold: #c4a055;
+  --gold-light: #e8d5a3;
+  --gold-dark: #8b6914;
+  --espresso: #1a1714;
+  --cream: #faf7f2;
+  --muted: #6b6560;
+  --card: rgba(255, 255, 255, 0.78);
+  --border-gold: rgba(196, 160, 85, 0.22);
+  --shadow-soft: 0 4px 24px -4px rgba(26, 23, 20, 0.08);
+  --shadow-lift: 0 12px 40px -8px rgba(26, 23, 20, 0.14);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-gold: var(--gold);
+  --color-gold-light: var(--gold-light);
+  --color-gold-dark: var(--gold-dark);
+  --color-espresso: var(--espresso);
+  --color-cream: var(--cream);
+  --color-muted: var(--muted);
   --font-sans: var(--font-heebo), Arial, Helvetica, sans-serif;
+  --font-display: var(--font-rubik), var(--font-heebo), sans-serif;
 }
 
 body {
@@ -19,4 +36,81 @@ body {
 
 * {
   box-sizing: border-box;
+}
+
+/* Premium background */
+.app-bg {
+  background-color: var(--background);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 100% 0%, rgba(196, 160, 85, 0.09), transparent),
+    radial-gradient(ellipse 60% 40% at 0% 100%, rgba(139, 105, 20, 0.06), transparent);
+}
+
+.auth-bg {
+  background-color: var(--espresso);
+  background-image:
+    radial-gradient(ellipse 70% 60% at 50% 0%, rgba(196, 160, 85, 0.18), transparent),
+    radial-gradient(ellipse 50% 40% at 100% 100%, rgba(196, 160, 85, 0.08), transparent),
+    linear-gradient(180deg, #1a1714 0%, #2a241c 50%, #1a1714 100%);
+}
+
+/* Glass & cards */
+.glass-card {
+  background: var(--card);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-gold);
+  box-shadow: var(--shadow-soft);
+}
+
+.glass-card-hover {
+  transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+}
+
+.glass-card-hover:hover {
+  box-shadow: var(--shadow-lift);
+  transform: translateY(-2px);
+  border-color: rgba(196, 160, 85, 0.4);
+}
+
+/* Typography */
+.font-display {
+  font-family: var(--font-display);
+}
+
+.page-title {
+  font-family: var(--font-display);
+  font-size: 1.875rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--espresso);
+}
+
+.page-subtitle {
+  color: var(--muted);
+  font-size: 0.9375rem;
+  margin-top: 0.25rem;
+}
+
+.gold-divider {
+  height: 2px;
+  width: 3rem;
+  background: linear-gradient(90deg, var(--gold), var(--gold-light));
+  border-radius: 1px;
+  margin-top: 0.75rem;
+}
+
+/* Stat card accent */
+.stat-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--gold-dark), var(--gold), var(--gold-light));
 }

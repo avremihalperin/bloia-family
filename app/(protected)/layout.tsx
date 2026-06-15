@@ -8,7 +8,7 @@ export default function ProtectedLayout({
   return (
     <>
       <AppNav />
-      <main className="mx-auto max-w-7xl px-4 py-6">{children}</main>
+      <main className="mx-auto max-w-7xl px-4 py-8 lg:px-6 lg:py-10">{children}</main>
     </>
   );
 }

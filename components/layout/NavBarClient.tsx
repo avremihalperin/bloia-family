@@ -22,15 +22,18 @@ export function NavBarClient({ treeName, isAdmin, logoutAction }: NavBarClientPr
   const adminHref = isAdmin ? "/admin/seed" : "/admin/login";
 
   return (
-    <header className="relative z-50 border-b border-amber-100 bg-white/90 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4">
+    <header className="sticky top-0 z-50 border-b border-[#c4a055]/15 bg-[#1a1714]/95 shadow-lg shadow-black/10 backdrop-blur-md">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 lg:px-6">
         <div>
-          <Link href="/" className="hover:opacity-80">
-            <h1 className="text-xl font-bold text-amber-900">{treeName}</h1>
+          <Link href="/" className="group block transition-opacity hover:opacity-90">
+            <h1 className="font-display text-xl font-bold tracking-tight text-[#e8d5a3]">
+              משפחת בלויא
+            </h1>
+            <p className="text-sm font-medium text-[#c4a055]/90">{treeName}</p>
           </Link>
-          <p className="text-sm text-stone-500">מאגר נתונים משפחתי</p>
+          <p className="text-xs tracking-wide text-stone-400">מאגר נתונים משפחתי</p>
         </div>
-        <nav className="flex flex-wrap items-center gap-2">
+        <nav className="flex flex-wrap items-center gap-1.5">
           {links.map((link) => {
             const active = pathname === link.href;
             return (
@@ -38,10 +41,10 @@ export function NavBarClient({ treeName, isAdmin, logoutAction }: NavBarClientPr
                 key={link.href}
                 href={link.href}
                 prefetch
-                className={`rounded-md border px-3 py-2 text-sm ${
+                className={`rounded-lg px-3.5 py-2 text-sm transition-all duration-200 ${
                   active
-                    ? "border-amber-400 bg-amber-100 font-medium text-amber-900"
-                    : "border-transparent text-stone-700 hover:border-amber-200 hover:bg-amber-50"
+                    ? "bg-[#c4a055]/20 font-medium text-[#e8d5a3]"
+                    : "text-stone-300 hover:bg-white/5 hover:text-white"
                 }`}
               >
                 {link.label}
@@ -51,21 +54,27 @@ export function NavBarClient({ treeName, isAdmin, logoutAction }: NavBarClientPr
           <Link
             href={adminHref}
             prefetch
-            className={`rounded-md border px-3 py-2 text-sm font-medium ${
+            className={`rounded-lg px-3.5 py-2 text-sm font-medium transition-all duration-200 ${
               pathname.startsWith("/admin")
-                ? "border-amber-600 bg-amber-700 text-white"
-                : "border-amber-400 bg-amber-100 text-amber-900 hover:bg-amber-200"
+                ? "bg-gradient-to-l from-[#8b6914] to-[#c4a055] text-white shadow-md"
+                : "border border-[#c4a055]/40 text-[#e8d5a3] hover:border-[#c4a055] hover:bg-[#c4a055]/10"
             }`}
           >
             ניהול
           </Link>
           <form action={logoutAction}>
-            <Button type="submit" variant="outline" size="sm">
+            <Button
+              type="submit"
+              variant="outline"
+              size="sm"
+              className="border-stone-600 bg-transparent text-stone-300 hover:border-stone-400 hover:bg-white/5 hover:text-white"
+            >
               יציאה
             </Button>
           </form>
         </nav>
       </div>
+      <div className="h-px bg-gradient-to-l from-transparent via-[#c4a055]/50 to-transparent" />
     </header>
   );
 }

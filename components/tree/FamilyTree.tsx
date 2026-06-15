@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import type { TreeNode } from "@/lib/types";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -11,43 +12,60 @@ interface FamilyTreeProps {
   nodes: TreeNode[];
 }
 
-const generationColors: Record<number, string> = {
-  1: "border-amber-600 bg-amber-50",
-  2: "border-orange-500 bg-orange-50",
-  3: "border-yellow-600 bg-yellow-50",
-  4: "border-lime-600 bg-lime-50",
-  5: "border-green-600 bg-green-50",
+const generationStyles: Record<number, string> = {
+  1: "border-t-[#8b6914] bg-white/90",
+  2: "border-t-[#c4a055] bg-white/85",
+  3: "border-t-[#d4b87a] bg-white/80",
+  4: "border-t-[#e8d5a3] bg-white/75",
+  5: "border-t-[#f0e6c8] bg-white/70",
 };
 
 function TreeNodeCard({ node }: { node: TreeNode }) {
   const gen = node.generation ?? 0;
-  const color = generationColors[gen] || "border-stone-400 bg-stone-50";
+  const style = generationStyles[gen] || "border-t-stone-300 bg-white/70";
 
   return (
     <div className="flex flex-col items-center">
       <Link
         href={`/person/${node.id}`}
         className={cn(
-          "flex w-36 flex-col items-center rounded-xl border-2 p-3 transition hover:shadow-md",
-          color
+          "group flex w-40 flex-col items-center rounded-2xl border border-[#c4a055]/20 border-t-[3px] p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#c4a055]/40 hover:shadow-lg",
+          style
         )}
       >
         <Avatar name={node.name} photoUrl={node.photo_url} size="md" />
-        <p className="mt-2 text-center text-sm font-semibold">{node.name}</p>
+        <p className="mt-2.5 text-center text-sm font-semibold text-[#1a1714] group-hover:text-[#8b6914]">
+          {node.name}
+        </p>
         {node.nickname && (
-          <p className="text-xs text-stone-500">&quot;{node.nickname}&quot;</p>
+          <p className="text-xs text-stone-400">&quot;{node.nickname}&quot;</p>
         )}
         {node.birthYear && (
-          <p className="text-xs text-stone-500">{node.birthYear}</p>
+          <p className="text-xs text-stone-400">{node.birthYear}</p>
+        )}
+        {node.familyPhotoUrl && (
+          <div className="mt-2 w-full overflow-hidden rounded-lg border border-[#c4a055]/20">
+            <Image
+              src={node.familyPhotoUrl}
+              alt={`תמונה משפחתית — ${node.name}`}
+              width={144}
+              height={96}
+              className="h-14 w-full object-cover"
+              unoptimized
+            />
+            <p className="bg-[#c4a055]/10 px-1 py-0.5 text-center text-[10px] text-[#8b6914]">
+              תמונה משפחתית
+            </p>
+          </div>
         )}
       </Link>
 
       {node.spouse && (
         <div className="mt-2 flex items-center gap-2">
-          <span className="text-xs text-stone-400">ו</span>
+          <span className="text-xs text-[#c4a055]">ו</span>
           <Link
             href={`/person/${node.spouse.id}`}
-            className="rounded-lg border border-dashed border-stone-300 px-2 py-1 text-xs hover:bg-stone-50"
+            className="rounded-lg border border-dashed border-[#c4a055]/30 px-2.5 py-1 text-xs text-stone-600 transition-colors hover:border-[#c4a055]/60 hover:bg-[#c4a055]/5"
           >
             {node.spouse.name}
           </Link>
@@ -56,8 +74,8 @@ function TreeNodeCard({ node }: { node: TreeNode }) {
 
       {node.children.length > 0 && (
         <>
-          <div className="my-2 h-6 w-px bg-amber-300" />
-          <div className="flex flex-wrap justify-center gap-6">
+          <div className="my-3 h-8 w-px bg-gradient-to-b from-[#c4a055]/60 to-[#c4a055]/10" />
+          <div className="flex flex-wrap justify-center gap-8">
             {node.children.map((child) => (
               <TreeNodeCard key={child.id} node={child} />
             ))}
@@ -78,18 +96,18 @@ export function FamilyTree({ nodes }: FamilyTreeProps) {
           +
         </Button>
         <Button size="sm" variant="outline" onClick={() => setScale((s) => Math.max(s - 0.1, 0.4))}>
-          -
+          −
         </Button>
         <Button size="sm" variant="ghost" onClick={() => setScale(1)}>
           איפוס
         </Button>
       </div>
-      <div className="overflow-auto rounded-xl border border-amber-100 bg-amber-50/30 p-8">
+      <div className="overflow-auto rounded-2xl border border-[#c4a055]/15 bg-white/40 p-10 shadow-inner">
         <div
-          className="inline-flex min-w-full justify-center transition-transform origin-top"
+          className="inline-flex min-w-full justify-center transition-transform duration-300 origin-top"
           style={{ transform: `scale(${scale})` }}
         >
-          <div className="flex flex-wrap justify-center gap-10">
+          <div className="flex flex-wrap justify-center gap-12">
             {nodes.map((node) => (
               <TreeNodeCard key={node.id} node={node} />
             ))}

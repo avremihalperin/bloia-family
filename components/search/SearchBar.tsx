@@ -50,7 +50,7 @@ export function SearchBar({ branches }: SearchBarProps) {
   }, [query, searchParams, pushParams]);
 
   return (
-    <div className="grid gap-4 rounded-xl border border-amber-100 bg-white p-4 md:grid-cols-4">
+    <div className="glass-card grid gap-4 rounded-2xl p-5 md:grid-cols-4">
       <div className="md:col-span-2">
         <Label htmlFor="search">חיפוש לפי שם</Label>
         <Input

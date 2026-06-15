@@ -79,8 +79,9 @@ export function JoinClient({ token, invitation, parents }: JoinClientProps) {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div className="text-center">
-        <h1 className="text-2xl font-bold text-amber-900">הצטרפות לעץ המשפחה</h1>
-        <p className="text-stone-600">מלא את פרטיך והצטרף למאגר המשפחתי</p>
+        <h1 className="font-display text-2xl font-bold text-[#e8d5a3]">הצטרפות לעץ המשפחה</h1>
+        <p className="mt-1 text-stone-400">מלא את פרטיך והצטרף למאגר המשפחתי</p>
+        <div className="mx-auto mt-4 h-px w-16 bg-gradient-to-l from-transparent via-[#c4a055] to-transparent" />
       </div>
 
       {step === "email" && (
@@ -119,8 +120,8 @@ export function JoinClient({ token, invitation, parents }: JoinClientProps) {
               initial={{ parent_id: invitation.parent_person_id || undefined }}
               parents={parents}
               showParentSelect
-              onSubmit={async (data) => {
-                const person = await registerViaInvitation(token, data);
+              onSubmit={async (data, photoFile) => {
+                const person = await registerViaInvitation(token, data, photoFile);
                 router.push(`/person/${person.id}`);
               }}
               submitLabel="הצטרף לעץ"

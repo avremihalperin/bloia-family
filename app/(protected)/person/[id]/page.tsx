@@ -1,10 +1,13 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { updatePersonAction } from "@/app/actions/family";
-import { getChildren, getPerson, getProfile } from "@/lib/data";
+import { getBranch, getChildren, getPerson, getProfile } from "@/lib/data";
+import { verifyAdminSession } from "@/lib/admin-session";
 import { displayBirthDates } from "@/lib/hebrew-date";
 import { PersonForm } from "@/components/person/PersonForm";
 import { PhotoUpload } from "@/components/person/PhotoUpload";
+import { BranchPhotoUpload } from "@/components/person/BranchPhotoUpload";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,12 +24,16 @@ export default async function PersonPage({ params }: PageProps) {
 
   const children = await getChildren(id);
   const profile = await getProfile();
+  const hasAdminSession = await verifyAdminSession();
+  const branch = person.branch_id ? await getBranch(person.branch_id) : null;
   const dates = displayBirthDates(person.birth_date_gregorian, person.birth_date_hebrew);
 
   const canEdit =
     profile?.person_id === person.id ||
     profile?.is_admin ||
     person.created_by === profile?.id;
+
+  const canUploadPhoto = canEdit || hasAdminSession;
 
   const boundUpdate = updatePersonAction.bind(null, person.id);
 
@@ -36,7 +43,7 @@ export default async function PersonPage({ params }: PageProps) {
         <div className="flex items-center gap-4">
           <Avatar name={person.full_name} photoUrl={person.photo_url} size="lg" />
           <div>
-            <h2 className="text-2xl font-bold">{person.full_name}</h2>
+            <h2 className="font-display text-2xl font-bold text-[#1a1714]">{person.full_name}</h2>
             {person.nickname && (
               <p className="text-stone-500">&quot;{person.nickname}&quot;</p>
             )}
@@ -69,21 +76,66 @@ export default async function PersonPage({ params }: PageProps) {
               </p>
             )}
             {person.gender && <p><strong>מגדר:</strong> {person.gender}</p>}
+            {branch?.photo_url && (
+              <div className="pt-2">
+                <p className="mb-2 font-semibold">תמונה משפחתית</p>
+                <Image
+                  src={branch.photo_url}
+                  alt={`תמונה משפחתית — ${person.full_name}`}
+                  width={240}
+                  height={160}
+                  className="rounded-lg object-cover"
+                  unoptimized
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {canEdit && profile && (
+        {canEdit && (
           <Card>
             <CardHeader>
               <CardTitle>עריכת פרופיל</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
+              {canUploadPhoto && (
+                <PhotoUpload
+                  personId={person.id}
+                  name={person.full_name}
+                  currentPhoto={person.photo_url}
+                />
+              )}
+              <PersonForm initial={person} onSubmit={boundUpdate} showPhoto={false} />
+            </CardContent>
+          </Card>
+        )}
+
+        {!canEdit && canUploadPhoto && (
+          <Card>
+            <CardHeader>
+              <CardTitle>תמונה אישית</CardTitle>
+            </CardHeader>
+            <CardContent>
               <PhotoUpload
                 personId={person.id}
                 name={person.full_name}
                 currentPhoto={person.photo_url}
               />
-              <PersonForm initial={person} onSubmit={boundUpdate} />
+            </CardContent>
+          </Card>
+        )}
+
+        {branch && hasAdminSession && (
+          <Card>
+            <CardHeader>
+              <CardTitle>תמונה משפחתית</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <BranchPhotoUpload
+                branchId={branch.id}
+                label={person.full_name}
+                currentPhoto={branch.photo_url}
+              />
             </CardContent>
           </Card>
         )}
@@ -107,7 +159,7 @@ export default async function PersonPage({ params }: PageProps) {
                 <Link
                   key={child.id}
                   href={`/person/${child.id}`}
-                  className="block rounded-lg border border-amber-100 px-4 py-2 hover:bg-amber-50"
+                  className="block rounded-xl border border-[#c4a055]/15 bg-white/60 px-4 py-3 transition-all hover:border-[#c4a055]/35 hover:bg-white hover:shadow-md"
                 >
                   {child.full_name}
                 </Link>

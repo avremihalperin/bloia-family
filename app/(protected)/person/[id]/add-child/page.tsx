@@ -3,6 +3,7 @@ import { addChildAction } from "@/app/actions/family";
 import { getPerson, getProfile } from "@/lib/data";
 import { PersonForm } from "@/components/person/PersonForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { PersonFormData } from "@/lib/types";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -21,7 +22,10 @@ export default async function AddChildPage({ params }: PageProps) {
 
   if (!canEdit) redirect(`/person/${id}`);
 
-  const boundAddChild = addChildAction.bind(null, parent.id);
+  async function handleAddChild(data: PersonFormData, photoFile?: File | null) {
+    "use server";
+    await addChildAction(parent!.id, data, photoFile);
+  }
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -32,12 +36,12 @@ export default async function AddChildPage({ params }: PageProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle>פרטי הילד/ה</CardTitle>
+          <CardTitle>פרטים אישיים</CardTitle>
         </CardHeader>
         <CardContent>
           <PersonForm
             initial={{ parent_id: parent.id }}
-            onSubmit={boundAddChild}
+            onSubmit={handleAddChild}
             submitLabel="הוסף לעץ"
           />
         </CardContent>

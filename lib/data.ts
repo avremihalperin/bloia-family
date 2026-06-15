@@ -128,6 +128,11 @@ export async function isCurrentUserAdmin(): Promise<boolean> {
   return profile?.is_admin ?? false;
 }
 
+export async function getBranch(id: string): Promise<Branch | null> {
+  const branches = await getBranches();
+  return branches.find((b) => b.id === id) ?? null;
+}
+
 export async function getChildren(parentId: string): Promise<Person[]> {
   const people = await getPeople();
   return people.filter((p) => p.parent_id === parentId);

@@ -34,7 +34,7 @@ export function PeopleTable({ people, branches }: PeopleTableProps) {
         accessorKey: "full_name",
         header: "שם מלא",
         cell: ({ row }) => (
-          <Link href={`/person/${row.original.id}`} className="font-medium text-amber-800 hover:underline">
+          <Link href={`/person/${row.original.id}`} className="font-medium text-[#8b6914] hover:underline">
             {row.original.full_name}
           </Link>
         ),
@@ -67,7 +67,7 @@ export function PeopleTable({ people, branches }: PeopleTableProps) {
         header: "טלפון",
         cell: ({ row }) =>
           row.original.phone ? (
-            <a href={`tel:${row.original.phone}`} className="text-amber-800 hover:underline" dir="ltr">
+            <a href={`tel:${row.original.phone}`} className="text-[#8b6914] hover:underline" dir="ltr">
               {row.original.phone}
             </a>
           ) : (
@@ -131,15 +131,15 @@ export function PeopleTable({ people, branches }: PeopleTableProps) {
           ייצוא CSV
         </Button>
       </div>
-      <div className="overflow-x-auto rounded-xl border border-amber-100">
+      <div className="overflow-x-auto rounded-2xl border border-[#c4a055]/15 bg-white/60 shadow-sm">
         <table className="w-full text-sm">
-          <thead className="bg-amber-50">
+          <thead className="bg-[#c4a055]/10">
             {table.getHeaderGroups().map((hg) => (
               <tr key={hg.id}>
                 {hg.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="cursor-pointer px-4 py-3 text-right font-semibold"
+                    className="cursor-pointer px-4 py-3.5 text-right font-semibold text-[#1a1714]"
                     onClick={header.column.getToggleSortingHandler()}
                   >
                     {flexRender(header.column.columnDef.header, header.getContext())}
@@ -151,7 +151,7 @@ export function PeopleTable({ people, branches }: PeopleTableProps) {
           </thead>
           <tbody>
             {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="border-t border-amber-50 hover:bg-amber-50/50">
+              <tr key={row.id} className="border-t border-[#c4a055]/10 transition-colors hover:bg-[#c4a055]/5">
                 {row.getVisibleCells().map((cell) => (
                   <td key={cell.id} className="px-4 py-3">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}

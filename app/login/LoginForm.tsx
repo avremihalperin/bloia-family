@@ -43,9 +43,10 @@ export function LoginForm() {
   };
 
   return (
-    <Card>
+    <Card className="overflow-hidden border-[#c4a055]/25 shadow-2xl shadow-black/20">
+      <div className="h-1 bg-gradient-to-l from-[#8b6914] via-[#c4a055] to-[#e8d5a3]" />
       <CardHeader>
-        <CardTitle className="text-center text-2xl">כניסה למאגר המשפחתי</CardTitle>
+        <CardTitle className="text-center font-display text-2xl">כניסה למאגר המשפחתי</CardTitle>
         <p className="text-center text-sm text-stone-500">
           הזן את הסיסמה המשפחתית כדי לצפות בעץ המשפחה
         </p>

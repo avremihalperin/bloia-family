@@ -36,6 +36,7 @@ export interface Branch {
   id: string;
   root_person_id: string | null;
   label: string;
+  photo_url: string | null;
   created_at: string;
 }
 
@@ -72,6 +73,7 @@ export interface TreeNode {
   generation: number | null;
   photo_url: string | null;
   birthYear: string | null;
+  familyPhotoUrl?: string | null;
   gender: Gender;
   children: TreeNode[];
   spouse?: TreeNode;

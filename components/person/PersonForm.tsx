@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { gregorianToHebrew } from "@/lib/hebrew-date";
 import type { Gender, Person, PersonFormData } from "@/lib/types";
+import { PhotoPicker } from "@/components/person/PhotoPicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,9 +12,10 @@ import { Select } from "@/components/ui/select";
 interface PersonFormProps {
   initial?: Partial<Person>;
   parents?: Person[];
-  onSubmit: (data: PersonFormData) => Promise<void>;
+  onSubmit: (data: PersonFormData, photoFile?: File | null) => Promise<void>;
   submitLabel?: string;
   showParentSelect?: boolean;
+  showPhoto?: boolean;
 }
 
 export function PersonForm({
@@ -22,9 +24,11 @@ export function PersonForm({
   onSubmit,
   submitLabel = "שמור",
   showParentSelect = false,
+  showPhoto = true,
 }: PersonFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [hebrewPreview, setHebrewPreview] = useState(
     initial?.birth_date_hebrew ||
       gregorianToHebrew(initial?.birth_date_gregorian) ||
@@ -50,7 +54,7 @@ export function PersonForm({
     };
 
     try {
-      await onSubmit(data);
+      await onSubmit(data, photoFile);
     } catch (err) {
       setError(err instanceof Error ? err.message : "שגיאה בשמירה");
     } finally {
@@ -60,6 +64,17 @@ export function PersonForm({
 
   return (
     <form onSubmit={handleSubmit} className="grid gap-4 md:grid-cols-2">
+      {showPhoto && (
+        <div className="md:col-span-2">
+          <PhotoPicker
+            name={initial?.full_name || "new-person"}
+            label="תמונה אישית"
+            currentPhoto={initial?.photo_url}
+            onFileSelect={setPhotoFile}
+          />
+        </div>
+      )}
+
       <div className="md:col-span-2">
         <Label htmlFor="full_name">שם מלא *</Label>
         <Input id="full_name" name="full_name" defaultValue={initial?.full_name} required />

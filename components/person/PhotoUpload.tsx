@@ -1,10 +1,9 @@
 "use client";
 
-import imageCompression from "browser-image-compression";
+import { compressImage } from "@/lib/compress-image";
 import { useState } from "react";
 import { uploadPhoto } from "@/app/actions/family";
 import { Avatar } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 
 interface PhotoUploadProps {
@@ -26,11 +25,7 @@ export function PhotoUpload({ personId, name, currentPhoto }: PhotoUploadProps) 
     setError(null);
 
     try {
-      const compressed = await imageCompression(file, {
-        maxSizeMB: 0.5,
-        maxWidthOrHeight: 400,
-        useWebWorker: true,
-      });
+      const compressed = await compressImage(file);
 
       const formData = new FormData();
       formData.append("photo", compressed, compressed.name);
@@ -59,9 +54,6 @@ export function PhotoUpload({ personId, name, currentPhoto }: PhotoUploadProps) 
       </div>
       {loading && <p className="text-sm text-stone-500">מעלה...</p>}
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button type="button" variant="ghost" size="sm" disabled>
-        {photoUrl ? "תמונה הועלתה" : "בחר תמונה"}
-      </Button>
     </div>
   );
 }

@@ -1,7 +1,13 @@
-import type { Person, TreeNode } from "@/lib/types";
+import type { Person, TreeNode, Branch } from "@/lib/types";
 import { getBirthYear } from "@/lib/hebrew-date";
 
-export function buildTree(people: Person[]): TreeNode[] {
+export function buildTree(people: Person[], branches: Branch[] = []): TreeNode[] {
+  const branchById = new Map(branches.map((b) => [b.id, b]));
+  const branchByRoot = new Map(
+    branches
+      .filter((b) => b.root_person_id)
+      .map((b) => [b.root_person_id!, b])
+  );
   const byId = new Map<string, Person>();
   const childrenMap = new Map<string, Person[]>();
 
@@ -40,12 +46,20 @@ export function buildTree(people: Person[]): TreeNode[] {
       }
     }
 
+    let familyPhotoUrl: string | null = null;
+    if (person.branch_id) {
+      familyPhotoUrl = branchById.get(person.branch_id)?.photo_url ?? null;
+    } else if (person.generation === 2) {
+      familyPhotoUrl = branchByRoot.get(person.id)?.photo_url ?? null;
+    }
+
     return {
       id: person.id,
       name: person.full_name,
       nickname: person.nickname,
       generation: person.generation,
       photo_url: person.photo_url,
+      familyPhotoUrl,
       birthYear: getBirthYear(person.birth_date_gregorian, person.birth_date_hebrew),
       gender: person.gender,
       children,

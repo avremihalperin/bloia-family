@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { getBranches, getPeople } from "@/lib/data";
 import { PeopleTable } from "@/components/table/PeopleTable";
 import { SearchBar } from "@/components/search/SearchBar";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 interface PageProps {
   searchParams: Promise<{ branch?: string; gen?: string; q?: string }>;
@@ -17,11 +18,8 @@ export default async function TablePage({ searchParams }: PageProps) {
   });
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-amber-900">טבלת משפחה</h2>
-        <p className="text-stone-600">מיון, סינון וייצוא CSV</p>
-      </div>
+    <div className="space-y-8">
+      <PageHeader title="טבלת משפחה" subtitle="מיון, סינון וייצוא CSV" />
 
       <Suspense fallback={<div>טוען...</div>}>
         <SearchBar branches={branches} />

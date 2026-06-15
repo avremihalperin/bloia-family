@@ -11,8 +11,8 @@ import type { Person, PersonFormData } from "@/lib/types";
 interface AdminSeedClientProps {
   gen1People: Person[];
   gen2People: Person[];
-  onCreateGen1: (data: PersonFormData) => Promise<unknown>;
-  onCreateGen2: (data: PersonFormData) => Promise<unknown>;
+  onCreateGen1: (data: PersonFormData, photoFile?: File | null) => Promise<unknown>;
+  onCreateGen2: (data: PersonFormData, photoFile?: File | null) => Promise<unknown>;
   onLinkSpouses: (personId: string, spouseId: string) => Promise<void>;
 }
 
@@ -49,9 +49,9 @@ export function AdminSeedClient({
         </CardHeader>
         <CardContent>
           <PersonForm
-            onSubmit={async (data) => {
+            onSubmit={async (data, photoFile) => {
               setError(null);
-              await onCreateGen1(data);
+              await onCreateGen1(data, photoFile);
               router.refresh();
             }}
             submitLabel="הוסף לדור 1"
@@ -59,7 +59,7 @@ export function AdminSeedClient({
           {gen1People.length > 0 && (
             <ul className="mt-4 space-y-1 text-sm">
               {gen1People.map((p) => (
-                <li key={p.id} className="rounded bg-amber-50 px-3 py-2">
+                <li key={p.id} className="rounded-xl border border-[#c4a055]/15 bg-[#c4a055]/5 px-4 py-2.5">
                   {p.full_name} (דור {p.generation})
                 </li>
               ))}
@@ -80,9 +80,9 @@ export function AdminSeedClient({
             <PersonForm
               parents={gen1People}
               showParentSelect
-              onSubmit={async (data) => {
+              onSubmit={async (data, photoFile) => {
                 setError(null);
-                await onCreateGen2(data);
+                await onCreateGen2(data, photoFile);
                 router.refresh();
               }}
               submitLabel="הוסף לדור 2"
@@ -91,7 +91,7 @@ export function AdminSeedClient({
           {gen2People.length > 0 && (
             <ul className="mt-4 space-y-1 text-sm">
               {gen2People.map((p) => (
-                <li key={p.id} className="rounded bg-amber-50 px-3 py-2">
+                <li key={p.id} className="rounded-xl border border-[#c4a055]/15 bg-[#c4a055]/5 px-4 py-2.5">
                   {p.full_name} (דור {p.generation})
                 </li>
               ))}

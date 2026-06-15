@@ -54,10 +54,17 @@ export default function SetupPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gradient-to-b from-amber-50 to-white p-4">
-      <Card className="w-full max-w-md">
+    <main className="auth-bg flex min-h-screen items-center justify-center p-4">
+      <div className="w-full max-w-md space-y-6">
+        <div className="text-center">
+          <h1 className="font-display text-3xl font-bold text-[#e8d5a3]">משפחת בלויא</h1>
+          <p className="mt-1 text-sm text-stone-400">הגדרה ראשונית</p>
+          <div className="mx-auto mt-4 h-px w-16 bg-gradient-to-l from-transparent via-[#c4a055] to-transparent" />
+        </div>
+      <Card className="w-full overflow-hidden border-[#c4a055]/25 shadow-2xl shadow-black/20">
+        <div className="h-1 bg-gradient-to-l from-[#8b6914] via-[#c4a055] to-[#e8d5a3]" />
         <CardHeader>
-          <CardTitle className="text-center text-2xl">
+          <CardTitle className="text-center font-display text-2xl">
             {isReset ? "איפוס סיסמה משפחתית" : "הגדרה ראשונית"}
           </CardTitle>
           <p className="text-center text-sm text-stone-500">
@@ -99,7 +106,7 @@ export default function SetupPage() {
                 minLength={4}
               />
             </div>
-            {info && <p className="text-sm text-amber-800">{info}</p>}
+            {info && <p className="text-sm text-[#8b6914]">{info}</p>}
             {error && <p className="text-sm text-red-600">{error}</p>}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "שומר..." : isReset ? "אפס והגדר מחדש" : "הגדר מערכת"}
@@ -107,13 +114,14 @@ export default function SetupPage() {
           </form>
           {isReset && (
             <p className="mt-4 text-center text-sm">
-              <Link href="/login" className="text-amber-800 underline">
+              <Link href="/login" className="text-[#c4a055] underline decoration-[#c4a055]/40 underline-offset-2">
                 חזרה להתחברות
               </Link>
             </p>
           )}
         </CardContent>
       </Card>
+      </div>
     </main>
   );
 }

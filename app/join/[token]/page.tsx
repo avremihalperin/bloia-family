@@ -19,7 +19,7 @@ export default async function JoinPage({ params }: PageProps) {
   });
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-amber-50 to-white p-4 py-12">
+    <main className="auth-bg min-h-screen p-4 py-12">
       <JoinClient
         token={token}
         invitation={invitation as Invitation | null}

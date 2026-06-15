@@ -1,4 +1,4 @@
-import { Heebo } from "next/font/google";
+import { Heebo, Rubik } from "next/font/google";
 import type { Metadata } from "next";
 import "./globals.css";
 
@@ -7,8 +7,14 @@ const heebo = Heebo({
   variable: "--font-heebo",
 });
 
+const rubik = Rubik({
+  subsets: ["hebrew", "latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-rubik",
+});
+
 export const metadata: Metadata = {
-  title: "מאגר משפחתי",
+  title: "משפחת בלויא",
   description: "עץ משפחה מורחב — מאגר נתונים פרטי למשפחה",
   robots: { index: false, follow: false },
 };
@@ -19,8 +25,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="he" dir="rtl" className={`${heebo.variable} h-full`}>
-      <body className="min-h-full bg-amber-50/30 font-sans text-stone-900 antialiased">
+    <html lang="he" dir="rtl" className={`${heebo.variable} ${rubik.variable} h-full`}>
+      <body className="app-bg min-h-full font-sans text-stone-900 antialiased">
         {children}
       </body>
     </html>
