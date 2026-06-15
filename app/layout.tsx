@@ -14,12 +14,17 @@ const rubik = Rubik({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
   title: "משפחת בלויא",
   description: "עץ משפחה מורחב — מאגר נתונים פרטי למשפחה",
   robots: { index: false, follow: false },
   icons: {
-    icon: "/logo.png",
-    apple: "/logo.png",
+    icon: [
+      { url: "/logo.png", type: "image/png" },
+      { url: "/icon.png", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-icon.png", type: "image/png" }],
+    shortcut: "/logo.png",
   },
   appleWebApp: {
     title: "משפחת בלויא",
