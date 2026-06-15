@@ -55,7 +55,7 @@ export function SearchBar({ branches }: SearchBarProps) {
         <Label htmlFor="search">חיפוש לפי שם</Label>
         <Input
           id="search"
-          placeholder="שם מלא, כינוי או טלפון..."
+          placeholder="שם מלא, כינוי, טלפון או דוא&quot;ל..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />

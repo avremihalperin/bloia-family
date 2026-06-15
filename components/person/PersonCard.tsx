@@ -55,6 +55,16 @@ export function PersonCard({
               {person.phone}
             </a>
           )}
+          {person.email && (
+            <a
+              href={`mailto:${person.email}`}
+              className="text-sm text-[#8b6914] hover:underline"
+              dir="ltr"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {person.email}
+            </a>
+          )}
         </CardContent>
       </Card>
     </Link>

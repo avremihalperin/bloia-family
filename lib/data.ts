@@ -65,7 +65,7 @@ export async function getPeople(filters?: {
     if (filters?.residence) query = query.ilike("residence", `%${filters.residence}%`);
     if (filters?.query) {
       query = query.or(
-        `full_name.ilike.%${filters.query}%,nickname.ilike.%${filters.query}%,phone.ilike.%${filters.query}%`
+        `full_name.ilike.%${filters.query}%,nickname.ilike.%${filters.query}%,phone.ilike.%${filters.query}%,email.ilike.%${filters.query}%`
       );
     }
     const { data, error } = await query;

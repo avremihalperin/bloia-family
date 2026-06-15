@@ -31,6 +31,7 @@ export function JoinClient({ token, invitation, parents }: JoinClientProps) {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
         setUserId(user.id);
+        if (user.email) setEmail(user.email);
         setStep("form");
       }
     });
@@ -38,6 +39,7 @@ export function JoinClient({ token, invitation, parents }: JoinClientProps) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         setUserId(session.user.id);
+        if (session.user.email) setEmail(session.user.email);
         setStep("form");
       }
     });
@@ -114,7 +116,10 @@ export function JoinClient({ token, invitation, parents }: JoinClientProps) {
           </CardHeader>
           <CardContent>
             <PersonForm
-              initial={{ parent_id: invitation.parent_person_id || undefined }}
+              initial={{
+                parent_id: invitation.parent_person_id || undefined,
+                email: email || undefined,
+              }}
               parents={parents}
               showParentSelect
               onSubmit={async (data, photoFile) => {

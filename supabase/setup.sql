@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS people (
   photo_url text,
   residence text,
   phone text,
+  email text,
   generation smallint,
   family_position text,
   gender text CHECK (gender IS NULL OR gender IN ('male', 'female', 'other')),
@@ -88,6 +89,7 @@ CREATE INDEX IF NOT EXISTS idx_people_branch_id ON people(branch_id);
 CREATE INDEX IF NOT EXISTS idx_people_generation ON people(generation);
 CREATE INDEX IF NOT EXISTS idx_people_claimed_by ON people(claimed_by);
 CREATE INDEX IF NOT EXISTS idx_people_phone ON people(phone);
+CREATE INDEX IF NOT EXISTS idx_people_email ON people(email);
 CREATE INDEX IF NOT EXISTS idx_invitations_token ON invitations(token);
 CREATE INDEX IF NOT EXISTS idx_family_sessions_token ON family_sessions(token);
 
@@ -226,7 +228,7 @@ BEGIN
   WHERE (branch_filter IS NULL OR p.branch_id = branch_filter)
     AND (generation_filter IS NULL OR p.generation = generation_filter)
     AND (residence_filter IS NULL OR p.residence ILIKE '%' || residence_filter || '%')
-    AND (search_query IS NULL OR p.full_name ILIKE '%' || search_query || '%' OR p.nickname ILIKE '%' || search_query || '%' OR p.phone ILIKE '%' || search_query || '%')
+    AND (search_query IS NULL OR p.full_name ILIKE '%' || search_query || '%' OR p.nickname ILIKE '%' || search_query || '%' OR p.phone ILIKE '%' || search_query || '%' OR p.email ILIKE '%' || search_query || '%')
   ORDER BY p.generation, p.full_name;
 END;
 $$;
@@ -260,14 +262,14 @@ $$;
 CREATE OR REPLACE FUNCTION public.insert_person_via_session(
   session_token text, p_full_name text, p_nickname text DEFAULT NULL,
   p_birth_date_gregorian date DEFAULT NULL, p_birth_date_hebrew text DEFAULT NULL,
-  p_residence text DEFAULT NULL, p_phone text DEFAULT NULL, p_family_position text DEFAULT NULL,
+  p_residence text DEFAULT NULL, p_phone text DEFAULT NULL, p_email text DEFAULT NULL, p_family_position text DEFAULT NULL,
   p_gender text DEFAULT NULL, p_parent_id uuid DEFAULT NULL, p_generation smallint DEFAULT NULL
 ) RETURNS people LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE result people;
 BEGIN
   IF NOT public.is_valid_family_session(session_token) THEN RAISE EXCEPTION 'invalid_session'; END IF;
-  INSERT INTO people (full_name, nickname, birth_date_gregorian, birth_date_hebrew, residence, phone, family_position, gender, parent_id, generation)
-  VALUES (p_full_name, p_nickname, p_birth_date_gregorian, p_birth_date_hebrew, p_residence, p_phone, p_family_position, p_gender, p_parent_id, p_generation)
+  INSERT INTO people (full_name, nickname, birth_date_gregorian, birth_date_hebrew, residence, phone, email, family_position, gender, parent_id, generation)
+  VALUES (p_full_name, p_nickname, p_birth_date_gregorian, p_birth_date_hebrew, p_residence, p_phone, p_email, p_family_position, p_gender, p_parent_id, p_generation)
   RETURNING * INTO result;
   RETURN result;
 END;
@@ -301,7 +303,7 @@ $$;
 CREATE OR REPLACE FUNCTION public.register_person_via_invitation(
   p_token text, p_user_id uuid, p_full_name text, p_nickname text DEFAULT NULL,
   p_birth_date_gregorian date DEFAULT NULL, p_birth_date_hebrew text DEFAULT NULL,
-  p_residence text DEFAULT NULL, p_phone text DEFAULT NULL, p_family_position text DEFAULT NULL,
+  p_residence text DEFAULT NULL, p_phone text DEFAULT NULL, p_email text DEFAULT NULL, p_family_position text DEFAULT NULL,
   p_gender text DEFAULT NULL, p_parent_id uuid DEFAULT NULL
 ) RETURNS people LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE inv invitations; result people; parent_id uuid;
@@ -312,8 +314,8 @@ BEGIN
   IF inv.expires_at < now() THEN RAISE EXCEPTION 'invitation_expired'; END IF;
   parent_id := COALESCE(p_parent_id, inv.parent_person_id);
   IF parent_id IS NULL THEN RAISE EXCEPTION 'parent_required'; END IF;
-  INSERT INTO people (full_name, nickname, birth_date_gregorian, birth_date_hebrew, residence, phone, family_position, gender, parent_id, created_by, claimed_by)
-  VALUES (p_full_name, p_nickname, p_birth_date_gregorian, p_birth_date_hebrew, p_residence, p_phone, p_family_position, p_gender, parent_id, p_user_id, p_user_id)
+  INSERT INTO people (full_name, nickname, birth_date_gregorian, birth_date_hebrew, residence, phone, email, family_position, gender, parent_id, created_by, claimed_by)
+  VALUES (p_full_name, p_nickname, p_birth_date_gregorian, p_birth_date_hebrew, p_residence, p_phone, p_email, p_family_position, p_gender, parent_id, p_user_id, p_user_id)
   RETURNING * INTO result;
   INSERT INTO profiles (id, person_id) VALUES (p_user_id, result.id) ON CONFLICT (id) DO UPDATE SET person_id = result.id;
   UPDATE invitations SET used_at = now(), target_person_id = result.id WHERE id = inv.id;

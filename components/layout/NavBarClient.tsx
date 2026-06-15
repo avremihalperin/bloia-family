@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BrandLogoNav } from "@/components/layout/BrandLogo";
+import { ContactAdminDialog } from "@/components/dashboard/ContactAdminDialog";
 import { Button } from "@/components/ui/button";
 
 const links = [
@@ -16,9 +17,15 @@ interface NavBarClientProps {
   treeName: string;
   isAdmin: boolean;
   logoutAction: () => Promise<void>;
+  defaultSenderName?: string;
 }
 
-export function NavBarClient({ treeName, isAdmin, logoutAction }: NavBarClientProps) {
+export function NavBarClient({
+  treeName,
+  isAdmin,
+  logoutAction,
+  defaultSenderName = "",
+}: NavBarClientProps) {
   const pathname = usePathname();
   const adminHref = isAdmin ? "/admin/seed" : "/admin/login";
 
@@ -55,6 +62,7 @@ export function NavBarClient({ treeName, isAdmin, logoutAction }: NavBarClientPr
           >
             ניהול
           </Link>
+          <ContactAdminDialog defaultSenderName={defaultSenderName} />
           <form action={logoutAction}>
             <Button
               type="submit"

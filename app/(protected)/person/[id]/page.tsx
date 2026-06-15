@@ -75,6 +75,14 @@ export default async function PersonPage({ params }: PageProps) {
                 </a>
               </p>
             )}
+            {person.email && (
+              <p>
+                <strong>דוא&quot;ל:</strong>{" "}
+                <a href={`mailto:${person.email}`} className="text-amber-800 hover:underline" dir="ltr">
+                  {person.email}
+                </a>
+              </p>
+            )}
             {person.gender && <p><strong>מגדר:</strong> {person.gender}</p>}
             {branch?.photo_url && (
               <div className="pt-2">

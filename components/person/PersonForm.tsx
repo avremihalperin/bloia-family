@@ -48,6 +48,7 @@ export function PersonForm({
       birth_date_hebrew: String(form.get("birth_date_hebrew") || "") || undefined,
       residence: String(form.get("residence") || "") || undefined,
       phone: String(form.get("phone") || "") || undefined,
+      email: String(form.get("email") || "") || undefined,
       family_position: String(form.get("family_position") || "") || undefined,
       gender: (form.get("gender") as Gender) || undefined,
       parent_id: String(form.get("parent_id") || "") || undefined,
@@ -134,6 +135,19 @@ export function PersonForm({
           className="text-left"
           placeholder="050-1234567"
           defaultValue={initial?.phone || ""}
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="email">דוא"ל</Label>
+        <Input
+          id="email"
+          name="email"
+          type="email"
+          dir="ltr"
+          className="text-left"
+          placeholder="name@example.com"
+          defaultValue={initial?.email || ""}
         />
       </div>
 

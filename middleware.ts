@@ -2,7 +2,36 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { updateSession } from "@/lib/supabase/middleware";
 
-const PUBLIC_PATHS = ["/login", "/join", "/setup", "/api/auth/family", "/robots.txt"];
+const PUBLIC_PATHS = [
+  "/login",
+  "/join",
+  "/setup",
+  "/api/auth/family",
+  "/robots.txt",
+  "/logo.png",
+  "/icon.png",
+  "/apple-icon.png",
+  "/favicon.ico",
+  "/manifest.webmanifest",
+];
+
+function isPublicAsset(pathname: string) {
+  return (
+    pathname === "/icon" ||
+    pathname.startsWith("/icon?") ||
+    pathname === "/apple-icon" ||
+    pathname.startsWith("/apple-icon?") ||
+    /\.(?:svg|png|jpg|jpeg|gif|webp|ico)$/i.test(pathname)
+  );
+}
+
+function isPublicPath(pathname: string) {
+  if (PUBLIC_PATHS.includes(pathname)) return true;
+  if (pathname.startsWith("/join/")) return true;
+  if (isPublicAsset(pathname)) return true;
+  if (pathname.startsWith("/_next") || pathname.startsWith("/api/auth")) return true;
+  return false;
+}
 
 async function hasValidFamilySession(request: NextRequest): Promise<boolean> {
   const token = request.cookies.get("family_db_token")?.value;
@@ -39,11 +68,7 @@ async function hasValidAdminSession(request: NextRequest): Promise<boolean> {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (
-    PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`)) ||
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/api/auth")
-  ) {
+  if (isPublicPath(pathname)) {
     return updateSession(request);
   }
 
@@ -72,6 +97,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|icon|apple-icon|logo.png|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };

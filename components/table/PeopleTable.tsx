@@ -75,6 +75,18 @@ export function PeopleTable({ people, branches }: PeopleTableProps) {
           ),
       },
       {
+        accessorKey: "email",
+        header: "דוא\"ל",
+        cell: ({ row }) =>
+          row.original.email ? (
+            <a href={`mailto:${row.original.email}`} className="text-[#8b6914] hover:underline" dir="ltr">
+              {row.original.email}
+            </a>
+          ) : (
+            "—"
+          ),
+      },
+      {
         id: "branch",
         header: "משפחה",
         cell: ({ row }) =>
@@ -95,7 +107,7 @@ export function PeopleTable({ people, branches }: PeopleTableProps) {
   });
 
   const exportCsv = () => {
-    const headers = ["שם מלא", "כינוי", "דור", "תאריך לועזי", "תאריך עברי", "מגורים", "טלפון", "משפחה", "מיקום"];
+    const headers = ["שם מלא", "כינוי", "דור", "תאריך לועזי", "תאריך עברי", "מגורים", "טלפון", "דוא\"ל", "משפחה", "מיקום"];
     const rows = people.map((p) => {
       const dates = displayBirthDates(p.birth_date_gregorian, p.birth_date_hebrew);
       return [
@@ -106,6 +118,7 @@ export function PeopleTable({ people, branches }: PeopleTableProps) {
         dates.hebrew || "",
         p.residence || "",
         p.phone || "",
+        p.email || "",
         p.branch_id ? branchMap.get(p.branch_id) || "" : "",
         p.family_position || "",
       ];

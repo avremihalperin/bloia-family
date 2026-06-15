@@ -19,6 +19,7 @@ export interface Person {
   photo_url: string | null;
   residence: string | null;
   phone: string | null;
+  email: string | null;
   generation: number | null;
   family_position: FamilyPosition;
   gender: Gender;
@@ -66,6 +67,13 @@ export interface Profile {
   created_at: string;
 }
 
+export interface AdminMessage {
+  id: string;
+  sender_name: string | null;
+  message: string;
+  created_at: string;
+}
+
 export interface TreeNode {
   id: string;
   name: string;
@@ -86,6 +94,7 @@ export interface PersonFormData {
   birth_date_hebrew?: string;
   residence?: string;
   phone?: string;
+  email?: string;
   family_position?: string;
   gender?: Gender;
   parent_id?: string;
