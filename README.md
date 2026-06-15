@@ -1,36 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# מאגר משפחתי — Bloia Family Tree
 
-## Getting Started
+אפליקציית ווב פרטית לניהול עץ משפחה מורחב עם Supabase ו-Next.js.
 
-First, run the development server:
+## התחלה מהירה
+
+### 1. התקנת תלויות
+
+```bash
+npm install
+```
+
+### 2. משתני סביבה
+
+העתק `.env.example` ל-`.env.local` והשלם:
+
+- `NEXT_PUBLIC_SUPABASE_URL` — כתובת הפרויקט ב-Supabase
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` — מפתח anon
+- `SUPABASE_SERVICE_ROLE_KEY` — (אופציונלי) מפתח service role
+- `NEXT_PUBLIC_APP_URL` — כתובת האתר (לקישורי הזמנה)
+
+### 3. הרצה מקומית
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 4. הגדרה ראשונית
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. פתח `http://localhost:3000/setup` — הגדר סיסמה משפחתית ושם העץ
+2. פתח `http://localhost:3000/login` — התחבר עם הסיסמה
+3. עבור ל**ניהול** — הזן דור 1 (סבא/סבתא) ודור 2 (בנים ובנות)
+4. צור קישורי הזמנה ושלח לבני המשפחה
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## תכונות
 
-## Learn More
+- סיסמה משפחתית לצפייה בכל העץ
+- קישור הזמנה אישי + אימייל לעריכה עצמית
+- תצוגות: עץ, טבלה, כרטיסים
+- חיפוש וסינון לפי משפחה ודור
+- תאריכי לידה לועזיים ועבריים
+- העלאת תמונות
+- ייצוא CSV
 
-To learn more about Next.js, take a look at the following resources:
+## פריסה ל-GitHub + Vercel
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### GitHub
+```bash
+git add .
+git commit -m "Family tree app"
+git branch -M main
+git remote add origin https://github.com/YOUR_USER/bloia.git
+git push -u origin main
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Vercel
+1. התחבר: `vercel login`
+2. פרוס: `vercel --prod`
+3. הגדר Environment Variables ב-Vercel (Settings → Environment Variables):
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY` (אופציונלי)
+   - `NEXT_PUBLIC_APP_URL` = כתובת ה-Vercel שלך
+4. ב-Supabase → Authentication → URL Configuration: הוסף `https://YOUR-APP.vercel.app/**`
 
-## Deploy on Vercel
+## מבנה מסד הנתונים
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `people` — אנשים בעץ
+- `branches` — ענפי משפחה (כל בן/בת מדור 2)
+- `invitations` — קישורי הזמנה
+- `app_settings` — הגדרות וסיסמה משפחתית
+- `family_sessions` — סשנים פעילים
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+מיגרציות SQL נמצאות בתיקיית `supabase/migrations/`.

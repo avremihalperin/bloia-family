@@ -1,0 +1,2 @@
+-- See applied migrations in Supabase project: bloia-family (nwjoijxfmwevvxavgqnj)
+-- Migration files are kept here for version control reference.
