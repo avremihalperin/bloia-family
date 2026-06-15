@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +8,6 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 
 export function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -24,6 +23,7 @@ export function LoginForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password }),
+        credentials: "include",
       });
 
       const data = await res.json();
@@ -33,8 +33,7 @@ export function LoginForm() {
       }
 
       const redirect = searchParams.get("redirect") || "/";
-      router.push(redirect);
-      router.refresh();
+      window.location.href = redirect;
     } catch {
       setError("שגיאה בהתחברות");
     } finally {

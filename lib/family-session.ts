@@ -1,18 +1,28 @@
 import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 const COOKIE_NAME = "family_db_token";
 const SESSION_DAYS = 7;
 
-export async function setFamilyDbToken(token: string) {
-  const cookieStore = await cookies();
-  cookieStore.set(COOKIE_NAME, token, {
+export function familyCookieOptions() {
+  return {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: "lax" as const,
     maxAge: SESSION_DAYS * 24 * 60 * 60,
     path: "/",
-  });
+  };
+}
+
+export async function setFamilyDbToken(token: string) {
+  const cookieStore = await cookies();
+  cookieStore.set(COOKIE_NAME, token, familyCookieOptions());
+}
+
+export function attachFamilyToken(response: NextResponse, token: string) {
+  response.cookies.set(COOKIE_NAME, token, familyCookieOptions());
+  return response;
 }
 
 export async function getFamilyDbToken(): Promise<string | null> {

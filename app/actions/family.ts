@@ -10,7 +10,13 @@ import { isCurrentUserAdmin, getProfile } from "@/lib/data";
 import type { PersonFormData } from "@/lib/types";
 
 async function getSessionToken() {
-  return getFamilyDbToken();
+  const familyToken = await getFamilyDbToken();
+  if (familyToken && (await verifyFamilySession())) return familyToken;
+
+  const adminToken = await getAdminDbToken();
+  if (adminToken && (await verifyAdminSession())) return adminToken;
+
+  return null;
 }
 
 export async function createPerson(data: PersonFormData & { generation?: number }) {
@@ -335,4 +341,25 @@ export async function addChildAction(
   const child = await createPerson({ ...data, parent_id: parentId });
   if (photoFile) await uploadPhotoForNewPerson(child.id, photoFile);
   redirect(`/person/${child.id}`);
+}
+
+export async function resetFamilyPasswordViaAdmin(
+  newPassword: string,
+  newTreeName?: string
+) {
+  const adminToken = await getAdminDbToken();
+  if (!adminToken || !(await verifyAdminSession())) {
+    throw new Error("נדרשת הרשאת מנהל");
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("reset_family_password_via_admin", {
+    admin_session_token: adminToken,
+    new_password: newPassword,
+    new_tree_name: newTreeName || null,
+  });
+
+  if (error) throw error;
+  revalidatePath("/");
+  revalidatePath("/admin/seed");
 }

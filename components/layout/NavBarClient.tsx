@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { BrandLogoNav } from "@/components/layout/BrandLogo";
 import { Button } from "@/components/ui/button";
 
 const links = [
@@ -24,15 +25,7 @@ export function NavBarClient({ treeName, isAdmin, logoutAction }: NavBarClientPr
   return (
     <header className="sticky top-0 z-50 border-b border-[#c4a055]/15 bg-[#1a1714]/95 shadow-lg shadow-black/10 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 lg:px-6">
-        <div>
-          <Link href="/" className="group block transition-opacity hover:opacity-90">
-            <h1 className="font-display text-xl font-bold tracking-tight text-[#e8d5a3]">
-              משפחת בלויא
-            </h1>
-            <p className="text-sm font-medium text-[#c4a055]/90">{treeName}</p>
-          </Link>
-          <p className="text-xs tracking-wide text-stone-400">מאגר נתונים משפחתי</p>
-        </div>
+        <BrandLogoNav treeName={treeName} />
         <nav className="flex flex-wrap items-center gap-1.5">
           {links.map((link) => {
             const active = pathname === link.href;

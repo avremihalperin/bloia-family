@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { setAdminDbToken } from "@/lib/admin-session";
+import { attachAdminToken } from "@/lib/admin-session";
 import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
@@ -22,8 +22,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    await setAdminDbToken(token);
-    return NextResponse.json({ success: true });
+    const response = NextResponse.json({ success: true });
+    return attachAdminToken(response, token);
   } catch {
     return NextResponse.json({ error: "שגיאה בשרת" }, { status: 500 });
   }

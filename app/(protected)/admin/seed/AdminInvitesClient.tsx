@@ -5,6 +5,7 @@ import { createInvitation } from "@/app/actions/family";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import type { Person } from "@/lib/types";
 
 interface AdminInvitesClientProps {
@@ -49,18 +50,14 @@ export function AdminInvitesClient({ people, baseUrl }: AdminInvitesClientProps)
       <CardContent className="space-y-4">
         <div>
           <Label>הורה בעץ (נקודת חיבור)</Label>
-          <select
-            className="mt-1 w-full rounded-md border border-amber-200 p-2"
-            value={parentId}
-            onChange={(e) => setParentId(e.target.value)}
-          >
+          <Select value={parentId} onChange={(e) => setParentId(e.target.value)}>
             <option value="">בחר הורה</option>
             {eligible.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.full_name} (דור {p.generation})
               </option>
             ))}
-          </select>
+          </Select>
         </div>
 
         <Button onClick={generateInvite} disabled={loading || !parentId}>

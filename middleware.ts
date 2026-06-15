@@ -52,7 +52,9 @@ export async function middleware(request: NextRequest) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";
     loginUrl.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(loginUrl);
+    const response = NextResponse.redirect(loginUrl);
+    response.cookies.delete("family_db_token");
+    return response;
   }
 
   if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login")) {

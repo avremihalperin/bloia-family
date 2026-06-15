@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { AdminSeedClient } from "./AdminSeedClient";
 import { AdminInvitesClient } from "./AdminInvitesClient";
 import { BranchPhotosClient } from "./BranchPhotosClient";
+import { AdminFamilyPasswordClient } from "./AdminFamilyPasswordClient";
 
 export default async function AdminSeedPage() {
   const people = await getPeople();
@@ -27,6 +28,7 @@ export default async function AdminSeedPage() {
         onLinkSpouses={linkSpouses}
       />
       <BranchPhotosClient branches={branches} gen2People={gen2} />
+      <AdminFamilyPasswordClient />
       <AdminInvitesClient people={people} baseUrl={baseUrl} />
     </div>
   );

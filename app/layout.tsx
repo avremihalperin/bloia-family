@@ -17,6 +17,13 @@ export const metadata: Metadata = {
   title: "משפחת בלויא",
   description: "עץ משפחה מורחב — מאגר נתונים פרטי למשפחה",
   robots: { index: false, follow: false },
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
+  appleWebApp: {
+    title: "משפחת בלויא",
+  },
 };
 
 export default function RootLayout({

@@ -1,18 +1,15 @@
 import { verifyFamilySession, getFamilyDbToken, requireFamilySession } from "@/lib/family-session";
+import { verifyAdminSession, getAdminDbToken } from "@/lib/admin-session";
 import { createAdminClient, hasAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { AppSettings, Branch, Person, Profile } from "@/lib/types";
 
 async function getSessionToken(): Promise<string | null> {
-  const familyOk = await verifyFamilySession();
-  if (familyOk) return getFamilyDbToken();
+  const familyToken = await getFamilyDbToken();
+  if (familyToken && (await verifyFamilySession())) return familyToken;
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (user) {
-    const token = await getFamilyDbToken();
-    if (token) return token;
-  }
+  const adminToken = await getAdminDbToken();
+  if (adminToken && (await verifyAdminSession())) return adminToken;
 
   return null;
 }
@@ -144,12 +141,9 @@ export async function getPotentialParents(): Promise<Person[]> {
 }
 
 export async function isPasswordConfigured(): Promise<boolean> {
-  if (hasAdminClient()) {
-    const admin = createAdminClient();
-    const { data } = await admin.from("app_settings").select("family_password_hash").eq("id", 1).single();
-    return Boolean(data?.family_password_hash);
-  }
-  return false;
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("family_password_is_configured");
+  return data === true;
 }
 
 export { requireFamilySession };

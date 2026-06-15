@@ -4,8 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { uploadBranchPhoto } from "@/app/actions/family";
 import { compressImage } from "@/lib/compress-image";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { PhotoFileInput } from "@/components/person/PhotoFileInput";
 
 interface BranchPhotoUploadProps {
   branchId: string;
@@ -60,25 +59,16 @@ export function BranchPhotoUpload({
       )}
       <div className="text-center">
         <p className="font-medium">{label}</p>
-        <Label htmlFor={`branch-photo-${branchId}`} className="mt-2 block text-sm">
-          תמונה משפחתית
-        </Label>
-        <input
+        <PhotoFileInput
           id={`branch-photo-${branchId}`}
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
+          label="תמונה משפחתית"
           onChange={handleChange}
           disabled={loading}
-          className="mt-1 block text-sm"
+          buttonText={loading ? "מעלה..." : "העלה תמונה משפחתית"}
+          className="mt-2"
         />
       </div>
-      {loading && <p className="text-sm text-stone-500">מעלה...</p>}
       {error && <p className="text-sm text-red-600">{error}</p>}
-      {photoUrl && (
-        <Button type="button" variant="ghost" size="sm" disabled>
-          תמונה הועלתה
-        </Button>
-      )}
     </div>
   );
 }

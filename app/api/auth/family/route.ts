@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { setFamilyDbToken } from "@/lib/family-session";
+import { attachFamilyToken } from "@/lib/family-session";
 import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
@@ -26,8 +26,8 @@ export async function POST(request: Request) {
       );
     }
 
-    await setFamilyDbToken(token);
-    return NextResponse.json({ success: true });
+    const response = NextResponse.json({ success: true });
+    return attachFamilyToken(response, token);
   } catch {
     return NextResponse.json({ error: "שגיאה בשרת" }, { status: 500 });
   }

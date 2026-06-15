@@ -4,7 +4,7 @@ import { compressImage } from "@/lib/compress-image";
 import { useState } from "react";
 import { uploadPhoto } from "@/app/actions/family";
 import { Avatar } from "@/components/ui/avatar";
-import { Label } from "@/components/ui/label";
+import { PhotoFileInput } from "@/components/person/PhotoFileInput";
 
 interface PhotoUploadProps {
   personId: string;
@@ -41,18 +41,13 @@ export function PhotoUpload({ personId, name, currentPhoto }: PhotoUploadProps) 
   return (
     <div className="flex flex-col items-center gap-3">
       <Avatar name={name} photoUrl={photoUrl} size="lg" />
-      <div>
-        <Label htmlFor="photo">תמונה</Label>
-        <input
-          id="photo"
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          onChange={handleChange}
-          disabled={loading}
-          className="mt-1 block text-sm"
-        />
-      </div>
-      {loading && <p className="text-sm text-stone-500">מעלה...</p>}
+      <PhotoFileInput
+        id={`photo-upload-${personId}`}
+        label="תמונה אישית"
+        onChange={handleChange}
+        disabled={loading}
+        buttonText={loading ? "מעלה..." : "העלה תמונה"}
+      />
       {error && <p className="text-sm text-red-600">{error}</p>}
     </div>
   );

@@ -1,18 +1,28 @@
 import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 const COOKIE_NAME = "admin_db_token";
 const SESSION_DAYS = 7;
 
-export async function setAdminDbToken(token: string) {
-  const cookieStore = await cookies();
-  cookieStore.set(COOKIE_NAME, token, {
+export function adminCookieOptions() {
+  return {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: "lax" as const,
     maxAge: SESSION_DAYS * 24 * 60 * 60,
     path: "/",
-  });
+  };
+}
+
+export async function setAdminDbToken(token: string) {
+  const cookieStore = await cookies();
+  cookieStore.set(COOKIE_NAME, token, adminCookieOptions());
+}
+
+export function attachAdminToken(response: NextResponse, token: string) {
+  response.cookies.set(COOKIE_NAME, token, adminCookieOptions());
+  return response;
 }
 
 export async function getAdminDbToken(): Promise<string | null> {

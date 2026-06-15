@@ -6,6 +6,7 @@ import { PersonForm } from "@/components/person/PersonForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import type { Person, PersonFormData } from "@/lib/types";
 
 interface AdminSeedClientProps {
@@ -108,29 +109,21 @@ export function AdminSeedClient({
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <Label>בן/בת זוג 1</Label>
-              <select
-                className="mt-1 w-full rounded-md border border-amber-200 p-2"
-                value={spouse1}
-                onChange={(e) => setSpouse1(e.target.value)}
-              >
+              <Select value={spouse1} onChange={(e) => setSpouse1(e.target.value)}>
                 <option value="">בחר</option>
                 {gen1People.map((p) => (
                   <option key={p.id} value={p.id}>{p.full_name}</option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div>
               <Label>בן/בת זוג 2</Label>
-              <select
-                className="mt-1 w-full rounded-md border border-amber-200 p-2"
-                value={spouse2}
-                onChange={(e) => setSpouse2(e.target.value)}
-              >
+              <Select value={spouse2} onChange={(e) => setSpouse2(e.target.value)}>
                 <option value="">בחר</option>
                 {gen1People.map((p) => (
                   <option key={p.id} value={p.id}>{p.full_name}</option>
                 ))}
-              </select>
+              </Select>
             </div>
           </div>
           <Button type="button" onClick={linkSpousePair}>קשר בני זוג</Button>
