@@ -1,6 +1,8 @@
 import type { Gender, MaritalStatus, Person } from "@/lib/types";
 
 const BAR_MITZVAH_AGE = 13;
+/** גרש עברי — מוצג נכון ב-BiDi (בניגוד לגרש ASCII) */
+const GERESH = "\u05F3";
 
 export function maritalStatusOptions(gender: Gender | null | undefined) {
   const female = gender === "female";
@@ -61,7 +63,7 @@ export function defaultHonorific(person: HonorificInput): string | null {
     person.marital_status === "single"
   ) {
     const age = getAge(person.birth_date_gregorian);
-    if (age !== null && age >= BAR_MITZVAH_AGE) return "הת'";
+    if (age !== null && age >= BAR_MITZVAH_AGE) return `הת${GERESH}`;
   }
 
   return null;
@@ -81,8 +83,8 @@ export function resolveHonorific(person: HonorificInput): string | null {
 export function nameSuffix(
   person: Pick<Person, "gender">
 ): string | null {
-  if (person.gender === "male") return "שי'";
-  if (person.gender === "female") return "שתחי'";
+  if (person.gender === "male") return `שי${GERESH}`;
+  if (person.gender === "female") return `שתחי${GERESH}`;
   return null;
 }
 

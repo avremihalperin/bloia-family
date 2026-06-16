@@ -18,6 +18,8 @@ interface PersonFormProps {
   submitLabel?: string;
   showParentSelect?: boolean;
   showPhoto?: boolean;
+  /** מאפס את השדות אחרי שמירה מוצלחת (מתאים לטפסי הוספה) */
+  resetOnSuccess?: boolean;
 }
 
 export function PersonForm({
@@ -27,7 +29,9 @@ export function PersonForm({
   submitLabel = "שמור",
   showParentSelect = false,
   showPhoto = true,
+  resetOnSuccess = false,
 }: PersonFormProps) {
+  const [formKey, setFormKey] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -59,6 +63,21 @@ export function PersonForm({
   const maritalOptions = maritalStatusOptions(gender);
 
   const parentOptions = useMemo(() => parentCoupleOptions(parents), [parents]);
+
+  const resetFormFields = () => {
+    setGender(initial?.gender ?? null);
+    setMaritalStatus(initial?.marital_status ?? "");
+    setBirthGregorian(initial?.birth_date_gregorian || "");
+    setIsSoldier(initial?.is_soldier ?? false);
+    setHebrewPreview(
+      initial?.birth_date_hebrew ||
+        gregorianToHebrew(initial?.birth_date_gregorian) ||
+        ""
+    );
+    setPhotoFile(null);
+    setError(null);
+    setFormKey((k) => k + 1);
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -95,6 +114,7 @@ export function PersonForm({
 
     try {
       await onSubmit(data, photoFile);
+      if (resetOnSuccess) resetFormFields();
     } catch (err) {
       setError(err instanceof Error ? err.message : "שגיאה בשמירה");
     } finally {
@@ -103,6 +123,7 @@ export function PersonForm({
   };
 
   return (
+    <div key={formKey}>
     <form onSubmit={handleSubmit} className="grid gap-4 md:grid-cols-2">
       {showPhoto && (
         <div className="md:col-span-2">
@@ -305,5 +326,6 @@ export function PersonForm({
         </Button>
       </div>
     </form>
+    </div>
   );
 }

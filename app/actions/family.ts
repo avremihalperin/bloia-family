@@ -9,7 +9,7 @@ import { createAdminClient, hasAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { isCurrentUserAdmin, getProfile, getPerson } from "@/lib/data";
 import { resolveParentPair } from "@/lib/parents";
-import type { PersonFormData } from "@/lib/types";
+import type { Person, PersonFormData } from "@/lib/types";
 
 function resolveHebrewDate(gregorian?: string, hebrew?: string) {
   const trimmed = hebrew?.trim();
@@ -53,6 +53,26 @@ async function withResolvedParents(data: PersonFormData) {
   };
 }
 
+function personToFormData(person: Person): PersonFormData {
+  return {
+    full_name: person.full_name,
+    nickname: person.nickname ?? undefined,
+    birth_date_gregorian: person.birth_date_gregorian ?? undefined,
+    birth_date_hebrew: person.birth_date_hebrew ?? undefined,
+    residence: person.residence ?? undefined,
+    phone: person.phone ?? undefined,
+    email: person.email ?? undefined,
+    maiden_name: person.maiden_name ?? undefined,
+    family_position: person.family_position ?? undefined,
+    gender: person.gender,
+    marital_status: person.marital_status ?? undefined,
+    honorific: person.honorific ?? undefined,
+    is_soldier: person.is_soldier,
+    spouse_name: person.spouse_name ?? undefined,
+    parent_id: person.parent_id ?? undefined,
+  };
+}
+
 async function getSessionToken() {
   const familyToken = await getFamilyDbToken();
   if (familyToken && (await verifyFamilySession())) return familyToken;
@@ -87,6 +107,7 @@ export async function createPerson(data: PersonFormData & { generation?: number 
 
     if (error) throw error;
     revalidatePath("/");
+    revalidatePath("/tree");
     return person;
   }
 
@@ -187,6 +208,7 @@ export async function updatePerson(id: string, data: PersonFormData) {
 
   if (error) throw error;
   revalidatePath("/");
+  revalidatePath("/tree");
   revalidatePath(`/person/${id}`);
   revalidatePath(`/person/${id}/edit`);
   return person;
@@ -486,7 +508,61 @@ export async function addChildAction(
 ) {
   const child = await createPerson({ ...data, parent_id: parentId });
   if (photoFile) await uploadPhotoForNewPerson(child.id, photoFile);
+  revalidatePath("/tree");
   redirect(`/person/${child.id}`);
+}
+
+export async function addSiblingAction(
+  personId: string,
+  data: PersonFormData,
+  photoFile?: File | null
+) {
+  const person = await getPerson(personId);
+  if (!person) throw new Error("לא נמצא");
+  if (!person.parent_id) {
+    throw new Error("אין הורה משותף — קשר קודם להורה או הוסף ילד דרך ההורה");
+  }
+  await addChildAction(person.parent_id, data, photoFile);
+}
+
+export async function setParentAction(personId: string, parentId: string) {
+  const person = await getPerson(personId);
+  if (!person) throw new Error("לא נמצא");
+  if (personId === parentId) throw new Error("לא ניתן לבחור את עצמו כהורה");
+
+  await updatePerson(personId, {
+    ...personToFormData(person),
+    parent_id: parentId,
+  });
+  revalidatePath("/tree");
+  redirect(`/person/${personId}`);
+}
+
+export async function linkParentAction(personId: string, parentId: string) {
+  const person = await getPerson(personId);
+  if (!person) throw new Error("לא נמצא");
+  if (personId === parentId) throw new Error("לא ניתן לבחור את עצמו כהורה");
+
+  await updatePerson(personId, {
+    ...personToFormData(person),
+    parent_id: parentId,
+  });
+  revalidatePath("/tree");
+  revalidatePath(`/person/${personId}`);
+  revalidatePath(`/person/${personId}/edit`);
+}
+
+export async function clearParentAction(personId: string) {
+  const person = await getPerson(personId);
+  if (!person) throw new Error("לא נמצא");
+
+  await updatePerson(personId, {
+    ...personToFormData(person),
+    parent_id: undefined,
+  });
+  revalidatePath("/tree");
+  revalidatePath(`/person/${personId}`);
+  revalidatePath(`/person/${personId}/edit`);
 }
 
 export async function resetFamilyPasswordViaAdmin(

@@ -1,5 +1,8 @@
 import { Suspense } from "react";
+import { verifyAdminSession } from "@/lib/admin-session";
+import { verifyFamilySession } from "@/lib/family-session";
 import { getBranches, getPeople } from "@/lib/data";
+import { canEditPerson } from "@/lib/permissions";
 import { buildTree, filterTreeByBranch } from "@/lib/tree-builder";
 import { FamilyTree } from "@/components/tree/FamilyTree";
 import { SearchBar } from "@/components/search/SearchBar";
@@ -24,6 +27,16 @@ export default async function TreePage({ searchParams }: PageProps) {
 
   const tree = buildTree(people, branches);
 
+  const isGlobalEditor =
+    (await verifyAdminSession()) || (await verifyFamilySession());
+  const editableIds = isGlobalEditor
+    ? people.map((p) => p.id)
+    : (
+        await Promise.all(
+          people.map(async (p) => ((await canEditPerson(p)) ? p.id : null))
+        )
+      ).filter((id): id is string => Boolean(id));
+
   return (
     <div className="space-y-8">
       <PageHeader title="עץ משפחה" subtitle="תצוגה היררכית — השתמשו ב-+/- לזום" />
@@ -37,7 +50,7 @@ export default async function TreePage({ searchParams }: PageProps) {
           אין עדיין נתונים בעץ. הוסף דור 1 ו-2 בדף הניהול.
         </p>
       ) : (
-        <FamilyTree nodes={tree} />
+        <FamilyTree nodes={tree} editableIds={editableIds} />
       )}
     </div>
   );

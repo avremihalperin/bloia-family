@@ -85,6 +85,8 @@ export interface TreeNode {
   birthDateHebrew: string | null;
   familyPhotoUrl?: string | null;
   gender: Gender;
+  parent_id?: string | null;
+  hasLinkedSpouse?: boolean;
   children: TreeNode[];
   spouse?: TreeNode;
 }

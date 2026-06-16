@@ -66,6 +66,7 @@ export function AdminSeedClient({
         defaultOpen={gen1People.length === 0}
       >
         <PersonForm
+          resetOnSuccess
           onSubmit={async (data, photoFile) => {
             setError(null);
             await onCreateGen1(data, photoFile);
@@ -91,6 +92,7 @@ export function AdminSeedClient({
           <PersonForm
             parents={gen1People}
             showParentSelect
+            resetOnSuccess
             onSubmit={async (data, photoFile) => {
               setError(null);
               await onCreateGen2(data, photoFile);

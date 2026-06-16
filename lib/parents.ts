@@ -45,3 +45,23 @@ export function resolveParentPair(
   }
   return { parent_id: parentId, parent2_id: null };
 }
+
+/** מועמדים להורה של אדם — בדרך כלל הדור שלפניו */
+export function parentCandidates(people: Person[], person: Person): Person[] {
+  const personGen = person.generation;
+
+  return people
+    .filter((p) => {
+      if (p.id === person.id) return false;
+      const pGen = p.generation ?? 0;
+      if (personGen && personGen > 1) return pGen === personGen - 1;
+      if (personGen === 1) return false;
+      // דור לא מוגדר — ברירת מחדל: דור 1 כהורים
+      return pGen === 1;
+    })
+    .sort(
+      (a, b) =>
+        (a.generation ?? 0) - (b.generation ?? 0) ||
+        a.full_name.localeCompare(b.full_name, "he")
+    );
+}

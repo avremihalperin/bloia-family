@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { addChildAction } from "@/app/actions/family";
+import { addSiblingAction } from "@/app/actions/family";
 import { getPerson } from "@/lib/data";
 import { canEditPerson } from "@/lib/permissions";
 import { PersonForm } from "@/components/person/PersonForm";
@@ -10,23 +10,29 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-export default async function AddChildPage({ params }: PageProps) {
+export default async function AddSiblingPage({ params }: PageProps) {
   const { id } = await params;
-  const parent = await getPerson(id);
-  if (!parent) notFound();
+  const person = await getPerson(id);
+  if (!person) notFound();
 
-  if (!(await canEditPerson(parent))) redirect(`/person/${id}`);
+  if (!(await canEditPerson(person))) redirect(`/person/${id}`);
 
-  async function handleAddChild(data: PersonFormData, photoFile?: File | null) {
+  if (!person.parent_id) {
+    redirect(`/person/${id}/set-parent`);
+  }
+
+  async function handleAddSibling(data: PersonFormData, photoFile?: File | null) {
     "use server";
-    await addChildAction(parent!.id, data, photoFile);
+    await addSiblingAction(person!.id, data, photoFile);
   }
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h2 className="text-2xl font-bold">הוספת ילד/ה</h2>
-        <p className="text-stone-600">הורה: {parent.full_name}</p>
+        <h2 className="text-2xl font-bold">הוספת אח/אחות</h2>
+        <p className="text-stone-600">
+          אח/אחות של {person.full_name} — אותו הורה בעץ
+        </p>
       </div>
 
       <Card>
@@ -35,9 +41,9 @@ export default async function AddChildPage({ params }: PageProps) {
         </CardHeader>
         <CardContent>
           <PersonForm
-            initial={{ parent_id: parent.id }}
+            initial={{ parent_id: person.parent_id }}
             resetOnSuccess
-            onSubmit={handleAddChild}
+            onSubmit={handleAddSibling}
             submitLabel="הוסף לעץ"
           />
         </CardContent>

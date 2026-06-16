@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { linkSpouses, unlinkSpouses, updatePerson, uploadPhotoForNewPerson } from "@/app/actions/family";
+import { linkSpouses, unlinkSpouses, linkParentAction, clearParentAction, updatePerson, uploadPhotoForNewPerson } from "@/app/actions/family";
+import { ParentLinker } from "@/components/person/ParentLinker";
 import { getPeople, getPerson } from "@/lib/data";
 import { canEditPerson } from "@/lib/permissions";
 import { PersonForm } from "@/components/person/PersonForm";
@@ -37,6 +38,16 @@ export default async function EditPersonPage({ params }: PageProps) {
     await linkSpouses(id, spouseId);
   }
 
+  async function handleClearParent() {
+    "use server";
+    await clearParentAction(id);
+  }
+
+  async function handleLinkParent(parentId: string) {
+    "use server";
+    await linkParentAction(id, parentId);
+  }
+
   async function handleUnlinkSpouse() {
     "use server";
     await unlinkSpouses(id);
@@ -67,7 +78,21 @@ export default async function EditPersonPage({ params }: PageProps) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card id="parents">
+        <CardHeader>
+          <CardTitle>קישור להורים</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ParentLinker
+            person={person}
+            people={people}
+            onLink={handleLinkParent}
+            onUnlink={handleClearParent}
+          />
+        </CardContent>
+      </Card>
+
+      <Card id="spouse">
         <CardHeader>
           <CardTitle>קישור בן/בת זוג</CardTitle>
         </CardHeader>

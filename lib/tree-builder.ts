@@ -61,6 +61,8 @@ export function buildTree(people: Person[], branches: Branch[] = []): TreeNode[]
       spousePerson.birth_date_hebrew
     ).hebrew,
     gender: spousePerson.gender,
+    parent_id: spousePerson.parent_id,
+    hasLinkedSpouse: true,
     children: [],
   });
 
@@ -104,6 +106,8 @@ export function buildTree(people: Person[], branches: Branch[] = []): TreeNode[]
         person.birth_date_hebrew
       ).hebrew,
       gender: person.gender,
+      parent_id: person.parent_id,
+      hasLinkedSpouse: Boolean(person.spouse_id),
       children,
       spouse,
     };

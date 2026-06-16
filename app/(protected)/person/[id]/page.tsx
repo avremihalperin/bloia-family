@@ -112,7 +112,7 @@ export default async function PersonPage({ params }: PageProps) {
             {genderLabel(person.gender) && (
               <p><strong>מגדר:</strong> {genderLabel(person.gender)}</p>
             )}
-            {parentRecords.length > 0 && (
+            {parentRecords.length > 0 ? (
               <p>
                 <strong>הורים:</strong>{" "}
                 {parentRecords.map((p, i) => (
@@ -124,7 +124,14 @@ export default async function PersonPage({ params }: PageProps) {
                   </span>
                 ))}
               </p>
-            )}
+            ) : canEdit ? (
+              <p className="text-amber-800">
+                לא משויך להורים.{" "}
+                <Link href={`/person/${person.id}/edit#parents`} className="font-medium underline">
+                  קשר להורים
+                </Link>
+              </p>
+            ) : null}
             {spouseName && person.marital_status === "married" && (
               <p>
                 <strong>{person.gender === "female" ? "בן זוג:" : "בת זוג:"}</strong>{" "}
