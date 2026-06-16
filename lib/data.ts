@@ -3,6 +3,7 @@ import { verifyAdminSession, getAdminDbToken } from "@/lib/admin-session";
 import { createAdminClient, hasAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { AppSettings, Branch, Person, Profile } from "@/lib/types";
+import { sortPeopleByBirthDate } from "@/lib/sort-people";
 
 async function getSessionToken(): Promise<string | null> {
   const familyToken = await getFamilyDbToken();
@@ -132,7 +133,7 @@ export async function getBranch(id: string): Promise<Branch | null> {
 
 export async function getChildren(parentId: string): Promise<Person[]> {
   const people = await getPeople();
-  return people.filter((p) => p.parent_id === parentId);
+  return sortPeopleByBirthDate(people.filter((p) => p.parent_id === parentId));
 }
 
 export async function getPotentialParents(): Promise<Person[]> {

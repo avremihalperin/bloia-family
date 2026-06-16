@@ -4,10 +4,54 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getFamilyDbToken, verifyFamilySession } from "@/lib/family-session";
 import { getAdminDbToken, verifyAdminSession } from "@/lib/admin-session";
+import { gregorianToHebrew } from "@/lib/hebrew-date";
 import { createAdminClient, hasAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { isCurrentUserAdmin, getProfile } from "@/lib/data";
+import { isCurrentUserAdmin, getProfile, getPerson } from "@/lib/data";
+import { resolveParentPair } from "@/lib/parents";
 import type { PersonFormData } from "@/lib/types";
+
+function resolveHebrewDate(gregorian?: string, hebrew?: string) {
+  const trimmed = hebrew?.trim();
+  return trimmed || gregorianToHebrew(gregorian) || null;
+}
+
+function personPayload(data: PersonFormData) {
+  return {
+    full_name: data.full_name,
+    nickname: data.nickname || null,
+    birth_date_gregorian: data.birth_date_gregorian || null,
+    birth_date_hebrew: resolveHebrewDate(data.birth_date_gregorian, data.birth_date_hebrew),
+    residence: data.residence || null,
+    phone: data.phone || null,
+    email: data.email || null,
+    maiden_name: data.maiden_name || null,
+    family_position: data.family_position || null,
+    gender: data.gender || null,
+    parent_id: data.parent_id || null,
+    parent2_id: data.parent2_id || null,
+    marital_status: data.marital_status || null,
+    honorific: data.honorific?.trim() || null,
+    is_soldier: data.is_soldier ?? false,
+    spouse_name:
+      data.marital_status === "married" ? data.spouse_name?.trim() || null : null,
+  };
+}
+
+async function withResolvedParents(data: PersonFormData) {
+  const base = personPayload(data);
+  if (!base.parent_id) {
+    return { ...base, parent2_id: null };
+  }
+
+  const parent = await getPerson(base.parent_id);
+  if (!parent) return base;
+
+  return {
+    ...base,
+    ...resolveParentPair(base.parent_id, new Map([[parent.id, parent]])),
+  };
+}
 
 async function getSessionToken() {
   const familyToken = await getFamilyDbToken();
@@ -30,19 +74,11 @@ export async function createPerson(data: PersonFormData & { generation?: number 
       throw new Error("רק מנהל יכול להוסיף דור 1-2");
     }
 
+    const payload = await withResolvedParents(data);
     const { data: person, error } = await supabase
       .from("people")
       .insert({
-        full_name: data.full_name,
-        nickname: data.nickname || null,
-        birth_date_gregorian: data.birth_date_gregorian || null,
-        birth_date_hebrew: data.birth_date_hebrew || null,
-        residence: data.residence || null,
-        phone: data.phone || null,
-        email: data.email || null,
-        family_position: data.family_position || null,
-        gender: data.gender || null,
-        parent_id: data.parent_id || null,
+        ...payload,
         generation: data.generation || null,
         created_by: user.id,
       })
@@ -55,19 +91,26 @@ export async function createPerson(data: PersonFormData & { generation?: number 
   }
 
   if (token) {
+    const payload = await withResolvedParents(data);
     const { data: person, error } = await supabase.rpc("insert_person_via_session", {
       session_token: token,
-      p_full_name: data.full_name,
-      p_nickname: data.nickname || null,
-      p_birth_date_gregorian: data.birth_date_gregorian || null,
-      p_birth_date_hebrew: data.birth_date_hebrew || null,
-      p_residence: data.residence || null,
-      p_phone: data.phone || null,
-      p_email: data.email || null,
-      p_family_position: data.family_position || null,
-      p_gender: data.gender || null,
-      p_parent_id: data.parent_id || null,
+      p_full_name: payload.full_name,
+      p_nickname: payload.nickname,
+      p_birth_date_gregorian: payload.birth_date_gregorian,
+      p_birth_date_hebrew: payload.birth_date_hebrew,
+      p_residence: payload.residence,
+      p_phone: payload.phone,
+      p_email: payload.email,
+      p_maiden_name: payload.maiden_name,
+      p_family_position: payload.family_position,
+      p_gender: payload.gender,
+      p_parent_id: payload.parent_id,
+      p_parent2_id: payload.parent2_id,
       p_generation: data.generation || null,
+      p_marital_status: payload.marital_status,
+      p_honorific: payload.honorific,
+      p_is_soldier: payload.is_soldier,
+      p_spouse_name: payload.spouse_name,
     });
 
     if (error) throw error;
@@ -77,19 +120,11 @@ export async function createPerson(data: PersonFormData & { generation?: number 
 
   if (hasAdminClient()) {
     const admin = createAdminClient();
+    const payload = await withResolvedParents(data);
     const { data: person, error } = await admin
       .from("people")
       .insert({
-        full_name: data.full_name,
-        nickname: data.nickname || null,
-        birth_date_gregorian: data.birth_date_gregorian || null,
-        birth_date_hebrew: data.birth_date_hebrew || null,
-        residence: data.residence || null,
-        phone: data.phone || null,
-        email: data.email || null,
-        family_position: data.family_position || null,
-        gender: data.gender || null,
-        parent_id: data.parent_id || null,
+        ...payload,
         generation: data.generation || null,
       })
       .select()
@@ -104,33 +139,56 @@ export async function createPerson(data: PersonFormData & { generation?: number 
 }
 
 export async function updatePerson(id: string, data: PersonFormData) {
+  const token = await getSessionToken();
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
+  const payload = await withResolvedParents(data);
+
+  if (token) {
+    const { data: person, error } = await supabase.rpc("update_person_via_session", {
+      session_token: token,
+      p_person_id: id,
+      p_full_name: payload.full_name,
+      p_nickname: payload.nickname,
+      p_birth_date_gregorian: payload.birth_date_gregorian,
+      p_birth_date_hebrew: payload.birth_date_hebrew,
+      p_residence: payload.residence,
+      p_phone: payload.phone,
+      p_email: payload.email,
+      p_maiden_name: payload.maiden_name,
+      p_family_position: payload.family_position,
+      p_gender: payload.gender,
+      p_parent_id: payload.parent_id,
+      p_parent2_id: payload.parent2_id,
+      p_marital_status: payload.marital_status,
+      p_honorific: payload.honorific,
+      p_is_soldier: payload.is_soldier,
+      p_spouse_name: payload.spouse_name,
+    });
+
+    if (error) throw error;
+    revalidatePath("/");
+    revalidatePath(`/person/${id}`);
+    revalidatePath(`/person/${id}/edit`);
+    return person;
+  }
+
   if (!user) {
-    throw new Error("נדרשת התחברות לעריכה. השתמש בקישור ההזמנה האישי.");
+    throw new Error("נדרשת התחברות לעריכה");
   }
 
   const { data: person, error } = await supabase
     .from("people")
-    .update({
-      full_name: data.full_name,
-      nickname: data.nickname || null,
-      birth_date_gregorian: data.birth_date_gregorian || null,
-      birth_date_hebrew: data.birth_date_hebrew || null,
-      residence: data.residence || null,
-      phone: data.phone || null,
-      email: data.email || null,
-      family_position: data.family_position || null,
-      gender: data.gender || null,
-      parent_id: data.parent_id || null,
-    })
+    .update(payload)
     .eq("id", id)
     .select()
     .single();
 
   if (error) throw error;
   revalidatePath("/");
+  revalidatePath(`/person/${id}`);
+  revalidatePath(`/person/${id}/edit`);
   return person;
 }
 
@@ -170,19 +228,27 @@ export async function registerViaInvitation(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("נדרשת התחברות");
 
+  const payload = await withResolvedParents(data);
+
   const { data: person, error } = await supabase.rpc("register_person_via_invitation", {
     p_token: inviteToken,
     p_user_id: user.id,
-    p_full_name: data.full_name,
-    p_nickname: data.nickname || null,
-    p_birth_date_gregorian: data.birth_date_gregorian || null,
-    p_birth_date_hebrew: data.birth_date_hebrew || null,
-    p_residence: data.residence || null,
-    p_phone: data.phone || null,
-    p_email: data.email || null,
-    p_family_position: data.family_position || null,
-    p_gender: data.gender || null,
-    p_parent_id: data.parent_id || null,
+    p_full_name: payload.full_name,
+    p_nickname: payload.nickname,
+    p_birth_date_gregorian: payload.birth_date_gregorian,
+    p_birth_date_hebrew: payload.birth_date_hebrew,
+    p_residence: payload.residence,
+    p_phone: payload.phone,
+    p_email: payload.email,
+    p_maiden_name: payload.maiden_name,
+    p_family_position: payload.family_position,
+    p_gender: payload.gender,
+    p_parent_id: payload.parent_id,
+    p_parent2_id: payload.parent2_id,
+    p_marital_status: payload.marital_status,
+    p_honorific: payload.honorific,
+    p_is_soldier: payload.is_soldier,
+    p_spouse_name: payload.spouse_name,
   });
 
   if (error) throw error;
@@ -288,6 +354,26 @@ export async function uploadBranchPhoto(branchId: string, formData: FormData) {
   return publicUrl;
 }
 
+export async function updateBranchLabel(branchId: string, label: string) {
+  const trimmed = label.trim();
+  if (!trimmed) throw new Error("נא להזין שם ענף");
+
+  const token = await getSessionToken();
+  if (!token) throw new Error("נדרשת הרשאה");
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("update_branch_label_via_session", {
+    session_token: token,
+    p_branch_id: branchId,
+    p_label: trimmed,
+  });
+
+  if (error) throw error;
+  revalidatePath("/");
+  revalidatePath("/table");
+  revalidatePath("/admin/seed");
+}
+
 export async function uploadPhotoForNewPerson(personId: string, file: File) {
   const formData = new FormData();
   formData.append("photo", file);
@@ -310,6 +396,8 @@ export async function linkSpouses(personId: string, spouseId: string) {
     });
     if (error) throw error;
     revalidatePath("/");
+    revalidatePath(`/person/${personId}`);
+    revalidatePath(`/person/${spouseId}`);
     return;
   }
 
@@ -317,9 +405,62 @@ export async function linkSpouses(personId: string, spouseId: string) {
   if (!admin) throw new Error("אין הרשאה");
 
   const client = hasAdminClient() ? createAdminClient() : supabase;
+  const { data: existing, error: existingError } = await client
+    .from("people")
+    .select("id, spouse_id")
+    .in("id", [personId, spouseId]);
+  if (existingError) throw existingError;
+
+  const oldSpouses = (existing ?? [])
+    .map((p) => p.spouse_id)
+    .filter((id): id is string => Boolean(id));
+
+  if (oldSpouses.length > 0) {
+    await client.from("people").update({ spouse_id: null }).in("id", oldSpouses);
+  }
+
+  await client.from("people").update({ spouse_id: null }).in("id", [personId, spouseId]);
   await client.from("people").update({ spouse_id: spouseId }).eq("id", personId);
   await client.from("people").update({ spouse_id: personId }).eq("id", spouseId);
   revalidatePath("/");
+  revalidatePath(`/person/${personId}`);
+  revalidatePath(`/person/${spouseId}`);
+}
+
+export async function unlinkSpouses(personId: string) {
+  const token = await getSessionToken();
+  const supabase = await createClient();
+
+  if (token) {
+    const { error } = await supabase.rpc("unlink_spouses_via_session", {
+      session_token: token,
+      person_id: personId,
+    });
+    if (error) throw error;
+    revalidatePath("/");
+    revalidatePath(`/person/${personId}`);
+    return;
+  }
+
+  const admin = await isCurrentUserAdmin();
+  if (!admin) throw new Error("אין הרשאה");
+
+  const client = hasAdminClient() ? createAdminClient() : supabase;
+  const { data: current, error } = await client
+    .from("people")
+    .select("spouse_id")
+    .eq("id", personId)
+    .single();
+  if (error) throw error;
+
+  await client.from("people").update({ spouse_id: null }).eq("id", personId);
+  if (current?.spouse_id) {
+    await client.from("people").update({ spouse_id: null }).eq("id", current.spouse_id);
+    revalidatePath(`/person/${current.spouse_id}`);
+  }
+
+  revalidatePath("/");
+  revalidatePath(`/person/${personId}`);
 }
 
 export async function createGen1Person(data: PersonFormData, photoFile?: File | null) {

@@ -32,9 +32,10 @@ CREATE TABLE IF NOT EXISTS people (
   residence text,
   phone text,
   email text,
+  maiden_name text,
   generation smallint,
   family_position text,
-  gender text CHECK (gender IS NULL OR gender IN ('male', 'female', 'other')),
+  gender text CHECK (gender IS NULL OR gender IN ('male', 'female')),
   parent_id uuid REFERENCES people(id) ON DELETE SET NULL,
   spouse_id uuid REFERENCES people(id) ON DELETE SET NULL,
   branch_id uuid,
@@ -262,14 +263,14 @@ $$;
 CREATE OR REPLACE FUNCTION public.insert_person_via_session(
   session_token text, p_full_name text, p_nickname text DEFAULT NULL,
   p_birth_date_gregorian date DEFAULT NULL, p_birth_date_hebrew text DEFAULT NULL,
-  p_residence text DEFAULT NULL, p_phone text DEFAULT NULL, p_email text DEFAULT NULL, p_family_position text DEFAULT NULL,
+  p_residence text DEFAULT NULL, p_phone text DEFAULT NULL, p_email text DEFAULT NULL, p_maiden_name text DEFAULT NULL, p_family_position text DEFAULT NULL,
   p_gender text DEFAULT NULL, p_parent_id uuid DEFAULT NULL, p_generation smallint DEFAULT NULL
 ) RETURNS people LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE result people;
 BEGIN
   IF NOT public.is_valid_family_session(session_token) THEN RAISE EXCEPTION 'invalid_session'; END IF;
-  INSERT INTO people (full_name, nickname, birth_date_gregorian, birth_date_hebrew, residence, phone, email, family_position, gender, parent_id, generation)
-  VALUES (p_full_name, p_nickname, p_birth_date_gregorian, p_birth_date_hebrew, p_residence, p_phone, p_email, p_family_position, p_gender, p_parent_id, p_generation)
+  INSERT INTO people (full_name, nickname, birth_date_gregorian, birth_date_hebrew, residence, phone, email, maiden_name, family_position, gender, parent_id, generation)
+  VALUES (p_full_name, p_nickname, p_birth_date_gregorian, p_birth_date_hebrew, p_residence, p_phone, p_email, p_maiden_name, p_family_position, p_gender, p_parent_id, p_generation)
   RETURNING * INTO result;
   RETURN result;
 END;
@@ -303,7 +304,7 @@ $$;
 CREATE OR REPLACE FUNCTION public.register_person_via_invitation(
   p_token text, p_user_id uuid, p_full_name text, p_nickname text DEFAULT NULL,
   p_birth_date_gregorian date DEFAULT NULL, p_birth_date_hebrew text DEFAULT NULL,
-  p_residence text DEFAULT NULL, p_phone text DEFAULT NULL, p_email text DEFAULT NULL, p_family_position text DEFAULT NULL,
+  p_residence text DEFAULT NULL, p_phone text DEFAULT NULL, p_email text DEFAULT NULL, p_maiden_name text DEFAULT NULL, p_family_position text DEFAULT NULL,
   p_gender text DEFAULT NULL, p_parent_id uuid DEFAULT NULL
 ) RETURNS people LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE inv invitations; result people; parent_id uuid;
@@ -314,11 +315,40 @@ BEGIN
   IF inv.expires_at < now() THEN RAISE EXCEPTION 'invitation_expired'; END IF;
   parent_id := COALESCE(p_parent_id, inv.parent_person_id);
   IF parent_id IS NULL THEN RAISE EXCEPTION 'parent_required'; END IF;
-  INSERT INTO people (full_name, nickname, birth_date_gregorian, birth_date_hebrew, residence, phone, email, family_position, gender, parent_id, created_by, claimed_by)
-  VALUES (p_full_name, p_nickname, p_birth_date_gregorian, p_birth_date_hebrew, p_residence, p_phone, p_email, p_family_position, p_gender, parent_id, p_user_id, p_user_id)
+  INSERT INTO people (full_name, nickname, birth_date_gregorian, birth_date_hebrew, residence, phone, email, maiden_name, family_position, gender, parent_id, created_by, claimed_by)
+  VALUES (p_full_name, p_nickname, p_birth_date_gregorian, p_birth_date_hebrew, p_residence, p_phone, p_email, p_maiden_name, p_family_position, p_gender, parent_id, p_user_id, p_user_id)
   RETURNING * INTO result;
   INSERT INTO profiles (id, person_id) VALUES (p_user_id, result.id) ON CONFLICT (id) DO UPDATE SET person_id = result.id;
   UPDATE invitations SET used_at = now(), target_person_id = result.id WHERE id = inv.id;
+  RETURN result;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.update_person_via_session(
+  session_token text,
+  p_person_id uuid,
+  p_full_name text,
+  p_nickname text DEFAULT NULL,
+  p_birth_date_gregorian date DEFAULT NULL,
+  p_birth_date_hebrew text DEFAULT NULL,
+  p_residence text DEFAULT NULL,
+  p_phone text DEFAULT NULL,
+  p_email text DEFAULT NULL,
+  p_maiden_name text DEFAULT NULL,
+  p_family_position text DEFAULT NULL,
+  p_gender text DEFAULT NULL,
+  p_parent_id uuid DEFAULT NULL
+) RETURNS people LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE result people;
+BEGIN
+  IF NOT public.is_valid_data_session(session_token) THEN RAISE EXCEPTION 'invalid_session'; END IF;
+  UPDATE people SET
+    full_name = p_full_name, nickname = p_nickname,
+    birth_date_gregorian = p_birth_date_gregorian, birth_date_hebrew = p_birth_date_hebrew,
+    residence = p_residence, phone = p_phone, email = p_email, maiden_name = p_maiden_name,
+    family_position = p_family_position, gender = p_gender, parent_id = p_parent_id
+  WHERE id = p_person_id RETURNING * INTO result;
+  IF NOT FOUND THEN RAISE EXCEPTION 'person_not_found'; END IF;
   RETURN result;
 END;
 $$;

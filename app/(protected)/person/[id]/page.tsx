@@ -1,12 +1,18 @@
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { updatePersonAction } from "@/app/actions/family";
-import { getBranch, getChildren, getPerson, getProfile } from "@/lib/data";
+import { getBranch, getChildren, getPerson } from "@/lib/data";
 import { verifyAdminSession } from "@/lib/admin-session";
+import { canEditPerson } from "@/lib/permissions";
 import { displayBirthDates } from "@/lib/hebrew-date";
-import { PersonForm } from "@/components/person/PersonForm";
-import { PhotoUpload } from "@/components/person/PhotoUpload";
+import { genderHeadingClasses, genderLinkClasses, genderRowClasses } from "@/lib/gender-colors";
+import {
+  formatDisplayName,
+  genderLabel,
+  getSpouseName,
+  maritalStatusLabel,
+} from "@/lib/person-display";
+import { EditPersonButton } from "@/components/person/EditPersonButton";
 import { BranchPhotoUpload } from "@/components/person/BranchPhotoUpload";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -23,39 +29,53 @@ export default async function PersonPage({ params }: PageProps) {
   if (!person) notFound();
 
   const children = await getChildren(id);
-  const profile = await getProfile();
+  const spouse = person.spouse_id ? await getPerson(person.spouse_id) : null;
+  const parent1 = person.parent_id ? await getPerson(person.parent_id) : null;
+  const parent2 = person.parent2_id
+    ? await getPerson(person.parent2_id)
+    : parent1?.spouse_id && parent1.spouse_id !== person.parent_id
+      ? await getPerson(parent1.spouse_id)
+      : null;
   const hasAdminSession = await verifyAdminSession();
   const branch = person.branch_id ? await getBranch(person.branch_id) : null;
   const dates = displayBirthDates(person.birth_date_gregorian, person.birth_date_hebrew);
-
-  const canEdit =
-    profile?.person_id === person.id ||
-    profile?.is_admin ||
-    person.created_by === profile?.id;
-
-  const canUploadPhoto = canEdit || hasAdminSession;
-
-  const boundUpdate = updatePersonAction.bind(null, person.id);
+  const canEdit = await canEditPerson(person);
+  const displayName = formatDisplayName(person, "full");
+  const spouseName = getSpouseName(person, spouse);
+  const parentRecords = [parent1, parent2].filter(
+    (p, i, arr): p is NonNullable<typeof parent1> =>
+      Boolean(p) && arr.findIndex((x) => x?.id === p?.id) === i
+  );
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Avatar name={person.full_name} photoUrl={person.photo_url} size="lg" />
+          <Avatar name={person.full_name} photoUrl={person.photo_url} size="lg" gender={person.gender} />
           <div>
-            <h2 className="font-display text-2xl font-bold text-[#1a1714]">{person.full_name}</h2>
+            <h2 className={genderHeadingClasses(person.gender, "font-display text-2xl font-bold")}>
+              {displayName}
+            </h2>
             {person.nickname && (
               <p className="text-stone-500">&quot;{person.nickname}&quot;</p>
             )}
+            {person.maiden_name && (
+              <p className="text-stone-500">שם נעורים: {person.maiden_name}</p>
+            )}
             <div className="mt-2 flex flex-wrap gap-2">
               <Badge>דור {person.generation}</Badge>
-              {person.family_position && <Badge>{person.family_position}</Badge>}
+              {person.family_position && (
+                <Badge>מיקום בילדים: {person.family_position}</Badge>
+              )}
             </div>
           </div>
         </div>
-        <Link href="/tree">
-          <Button variant="outline">חזרה לעץ</Button>
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          {canEdit && <EditPersonButton personId={person.id} />}
+          <Link href="/tree">
+            <Button variant="outline">חזרה לעץ</Button>
+          </Link>
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -83,7 +103,40 @@ export default async function PersonPage({ params }: PageProps) {
                 </a>
               </p>
             )}
-            {person.gender && <p><strong>מגדר:</strong> {person.gender}</p>}
+            {maritalStatusLabel(person.marital_status, person.gender) && (
+              <p>
+                <strong>מצב משפחתי:</strong>{" "}
+                {maritalStatusLabel(person.marital_status, person.gender)}
+              </p>
+            )}
+            {genderLabel(person.gender) && (
+              <p><strong>מגדר:</strong> {genderLabel(person.gender)}</p>
+            )}
+            {parentRecords.length > 0 && (
+              <p>
+                <strong>הורים:</strong>{" "}
+                {parentRecords.map((p, i) => (
+                  <span key={p.id}>
+                    <Link href={`/person/${p.id}`} className="text-amber-800 hover:underline">
+                      {formatDisplayName(p, "short")}
+                    </Link>
+                    {i < parentRecords.length - 1 ? " ו" : ""}
+                  </span>
+                ))}
+              </p>
+            )}
+            {spouseName && person.marital_status === "married" && (
+              <p>
+                <strong>{person.gender === "female" ? "בן זוג:" : "בת זוג:"}</strong>{" "}
+                {spouse ? (
+                  <Link href={`/person/${spouse.id}`} className="text-amber-800 hover:underline">
+                    {spouseName}
+                  </Link>
+                ) : (
+                  spouseName
+                )}
+              </p>
+            )}
             {branch?.photo_url && (
               <div className="pt-2">
                 <p className="mb-2 font-semibold">תמונה משפחתית</p>
@@ -99,39 +152,6 @@ export default async function PersonPage({ params }: PageProps) {
             )}
           </CardContent>
         </Card>
-
-        {canEdit && (
-          <Card>
-            <CardHeader>
-              <CardTitle>עריכת פרופיל</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {canUploadPhoto && (
-                <PhotoUpload
-                  personId={person.id}
-                  name={person.full_name}
-                  currentPhoto={person.photo_url}
-                />
-              )}
-              <PersonForm initial={person} onSubmit={boundUpdate} showPhoto={false} />
-            </CardContent>
-          </Card>
-        )}
-
-        {!canEdit && canUploadPhoto && (
-          <Card>
-            <CardHeader>
-              <CardTitle>תמונה אישית</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <PhotoUpload
-                personId={person.id}
-                name={person.full_name}
-                currentPhoto={person.photo_url}
-              />
-            </CardContent>
-          </Card>
-        )}
 
         {branch && hasAdminSession && (
           <Card>
@@ -164,13 +184,15 @@ export default async function PersonPage({ params }: PageProps) {
           ) : (
             <div className="space-y-2">
               {children.map((child) => (
-                <Link
+                <div
                   key={child.id}
-                  href={`/person/${child.id}`}
-                  className="block rounded-xl border border-[#c4a055]/15 bg-white/60 px-4 py-3 transition-all hover:border-[#c4a055]/35 hover:bg-white hover:shadow-md"
+                  className={genderRowClasses(child.gender, "flex items-center justify-between gap-3")}
                 >
-                  {child.full_name}
-                </Link>
+                  <Link href={`/person/${child.id}`} className={genderLinkClasses(child.gender)}>
+                    {formatDisplayName(child, "short")}
+                  </Link>
+                  {canEdit && <EditPersonButton personId={child.id} />}
+                </div>
               ))}
             </div>
           )}

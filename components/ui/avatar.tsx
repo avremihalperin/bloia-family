@@ -1,3 +1,5 @@
+import type { Gender } from "@/lib/types";
+import { genderAvatarClasses, genderAvatarPlaceholderClasses } from "@/lib/gender-colors";
 import { cn, getInitials } from "@/lib/utils";
 import Image from "next/image";
 
@@ -5,6 +7,7 @@ interface AvatarProps {
   name: string;
   photoUrl?: string | null;
   size?: "sm" | "md" | "lg";
+  gender?: Gender | null;
   className?: string;
 }
 
@@ -14,9 +17,9 @@ const sizes = {
   lg: "h-20 w-20 text-xl ring-[3px]",
 };
 
-export function Avatar({ name, photoUrl, size = "md", className }: AvatarProps) {
+export function Avatar({ name, photoUrl, size = "md", gender, className }: AvatarProps) {
   const dim = size === "sm" ? 32 : size === "md" ? 48 : 80;
-  const ringClass = "ring-[#c4a055]/40";
+  const ringClass = genderAvatarClasses(gender);
 
   if (photoUrl) {
     return (
@@ -34,7 +37,8 @@ export function Avatar({ name, photoUrl, size = "md", className }: AvatarProps) 
   return (
     <div
       className={cn(
-        "flex items-center justify-center rounded-full bg-gradient-to-br from-[#e8d5a3] to-[#c4a055] font-semibold text-[#1a1714] shadow-sm",
+        "flex items-center justify-center rounded-full",
+        genderAvatarPlaceholderClasses(gender),
         sizes[size],
         ringClass,
         className

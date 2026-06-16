@@ -11,9 +11,15 @@ import {
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { Branch, Person } from "@/lib/types";
+import { EditPersonButton } from "@/components/person/EditPersonButton";
 import { displayBirthDates } from "@/lib/hebrew-date";
+import { genderLinkClasses, genderTableRowClasses } from "@/lib/gender-colors";
+import { generationBadgeLabel, generationRoleName } from "@/lib/generation-labels";
+import { formatDisplayName } from "@/lib/person-display";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { BranchLabelCell } from "@/components/table/BranchLabelCell";
 
 interface PeopleTableProps {
   people: Person[];
@@ -34,16 +40,23 @@ export function PeopleTable({ people, branches }: PeopleTableProps) {
         accessorKey: "full_name",
         header: "שם מלא",
         cell: ({ row }) => (
-          <Link href={`/person/${row.original.id}`} className="font-medium text-[#8b6914] hover:underline">
-            {row.original.full_name}
+          <Link
+            href={`/person/${row.original.id}`}
+            className={genderLinkClasses(row.original.gender)}
+          >
+            {formatDisplayName(row.original, "short")}
           </Link>
         ),
       },
       { accessorKey: "nickname", header: "כינוי" },
       {
         accessorKey: "generation",
-        header: "דור",
-        cell: ({ row }) => <Badge>דור {row.original.generation}</Badge>,
+        header: "מיון בעץ",
+        cell: ({ row }) => (
+          <Badge className="whitespace-nowrap">
+            {generationBadgeLabel(row.original.generation)}
+          </Badge>
+        ),
       },
       {
         id: "birth",
@@ -88,11 +101,24 @@ export function PeopleTable({ people, branches }: PeopleTableProps) {
       },
       {
         id: "branch",
-        header: "משפחה",
-        cell: ({ row }) =>
-          row.original.branch_id ? branchMap.get(row.original.branch_id) : "—",
+        header: "משפחת ענף",
+        cell: ({ row }) => (
+          <BranchLabelCell
+            branchId={row.original.branch_id}
+            label={
+              row.original.branch_id
+                ? branchMap.get(row.original.branch_id) || ""
+                : ""
+            }
+          />
+        ),
       },
-      { accessorKey: "family_position", header: "מיקום במשפחה" },
+      { accessorKey: "family_position", header: "מיקום בילדים" },
+      {
+        id: "actions",
+        header: "",
+        cell: ({ row }) => <EditPersonButton personId={row.original.id} />,
+      },
     ],
     [branchMap]
   );
@@ -107,12 +133,25 @@ export function PeopleTable({ people, branches }: PeopleTableProps) {
   });
 
   const exportCsv = () => {
-    const headers = ["שם מלא", "כינוי", "דור", "תאריך לועזי", "תאריך עברי", "מגורים", "טלפון", "דוא\"ל", "משפחה", "מיקום"];
+    const headers = [
+      "שם מלא",
+      "כינוי",
+      "מיון בעץ",
+      "דור",
+      "תאריך לועזי",
+      "תאריך עברי",
+      "מגורים",
+      "טלפון",
+      'דוא"ל',
+      "משפחת ענף",
+      "מיקום בילדים",
+    ];
     const rows = people.map((p) => {
       const dates = displayBirthDates(p.birth_date_gregorian, p.birth_date_hebrew);
       return [
         p.full_name,
         p.nickname || "",
+        generationRoleName(p.generation),
         String(p.generation || ""),
         dates.gregorian || "",
         dates.hebrew || "",
@@ -164,7 +203,13 @@ export function PeopleTable({ people, branches }: PeopleTableProps) {
           </thead>
           <tbody>
             {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="border-t border-[#c4a055]/10 transition-colors hover:bg-[#c4a055]/5">
+              <tr
+                key={row.id}
+                className={cn(
+                  "border-t border-[#c4a055]/10 transition-colors",
+                  genderTableRowClasses(row.original.gender)
+                )}
+              >
                 {row.getVisibleCells().map((cell) => (
                   <td key={cell.id} className="px-4 py-3">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}

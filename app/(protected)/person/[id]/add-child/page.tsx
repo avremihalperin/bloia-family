@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { addChildAction } from "@/app/actions/family";
-import { getPerson, getProfile } from "@/lib/data";
+import { getPerson } from "@/lib/data";
+import { canEditPerson } from "@/lib/permissions";
 import { PersonForm } from "@/components/person/PersonForm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { PersonFormData } from "@/lib/types";
@@ -14,13 +15,7 @@ export default async function AddChildPage({ params }: PageProps) {
   const parent = await getPerson(id);
   if (!parent) notFound();
 
-  const profile = await getProfile();
-  const canEdit =
-    profile?.person_id === parent.id ||
-    profile?.is_admin ||
-    parent.created_by === profile?.id;
-
-  if (!canEdit) redirect(`/person/${id}`);
+  if (!(await canEditPerson(parent))) redirect(`/person/${id}`);
 
   async function handleAddChild(data: PersonFormData, photoFile?: File | null) {
     "use server";

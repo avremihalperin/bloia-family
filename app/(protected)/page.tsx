@@ -4,8 +4,12 @@ import { verifyAdminSession } from "@/lib/admin-session";
 import { getBranches, getPeople } from "@/lib/data";
 import { SearchBar } from "@/components/search/SearchBar";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { UpcomingEventsPanel } from "@/components/dashboard/UpcomingEventsPanel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { EditPersonButton } from "@/components/person/EditPersonButton";
+import { genderLinkClasses, genderRowClasses } from "@/lib/gender-colors";
+import { formatDisplayName } from "@/lib/person-display";
 import { cn } from "@/lib/utils";
 
 const statTones = [
@@ -104,6 +108,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         <SearchBar branches={branches} />
       </Suspense>
 
+      <UpcomingEventsPanel people={people} />
+
       <div>
         <h3 className="font-display mb-4 text-lg font-semibold text-[#1a1714]">אחרונים שנוספו</h3>
         <div className="space-y-2">
@@ -112,14 +118,18 @@ export default async function DashboardPage({ searchParams }: PageProps) {
             .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
             .slice(0, 8)
             .map((person) => (
-              <Link
+              <div
                 key={person.id}
-                href={`/person/${person.id}`}
-                className="flex items-center justify-between rounded-xl border border-[#c4a055]/15 bg-white/60 px-5 py-3.5 transition-all duration-200 hover:border-[#c4a055]/35 hover:bg-white hover:shadow-md"
+                className={genderRowClasses(person.gender, "flex items-center justify-between gap-3 px-5 py-3.5 duration-200")}
               >
-                <span className="font-medium text-[#1a1714]">{person.full_name}</span>
-                <Badge>דור {person.generation}</Badge>
-              </Link>
+                <Link href={`/person/${person.id}`} className={genderLinkClasses(person.gender)}>
+                  {formatDisplayName(person, "short")}
+                </Link>
+                <div className="flex items-center gap-2">
+                  <Badge>דור {person.generation}</Badge>
+                  <EditPersonButton personId={person.id} />
+                </div>
+              </div>
             ))}
         </div>
       </div>

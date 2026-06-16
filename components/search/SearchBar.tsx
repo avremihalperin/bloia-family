@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import type { Branch } from "@/lib/types";
+import { generationFilterOptions } from "@/lib/generation-labels";
 
 interface SearchBarProps {
   branches: Branch[];
@@ -93,11 +94,13 @@ export function SearchBar({ branches }: SearchBarProps) {
           }
         >
           <option value="">כל הדורות</option>
-          <option value="1">דור 1 — סבא וסבתא</option>
-          <option value="2">דור 2 — בנים ובנות</option>
-          <option value="3">דור 3 — נכדים</option>
-          <option value="4">דור 4 — נינים</option>
-          <option value="5">דור 5+</option>
+          {generationFilterOptions()
+            .filter((o) => o.value !== "")
+            .map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
         </Select>
       </div>
     </div>

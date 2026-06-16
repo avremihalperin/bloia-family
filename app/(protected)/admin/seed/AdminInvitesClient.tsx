@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { createInvitation } from "@/app/actions/family";
+import { CollapsibleSection } from "@/components/ui/collapsible-section";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import type { Person } from "@/lib/types";
@@ -40,14 +40,11 @@ export function AdminInvitesClient({ people, baseUrl }: AdminInvitesClientProps)
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>יצירת קישור הזמנה</CardTitle>
-        <p className="text-sm text-stone-500">
-          שלח קישור לנכד/נין כדי שיוכל להצטרף ולהזין את פרטיו
-        </p>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <CollapsibleSection
+      title="יצירת קישור הזמנה"
+      subtitle="שלח קישור לנכד/נין כדי שיוכל להצטרף ולהזין את פרטיו"
+    >
+      <div className="space-y-4">
         <div>
           <Label>הורה בעץ (נקודת חיבור)</Label>
           <Select value={parentId} onChange={(e) => setParentId(e.target.value)}>
@@ -75,7 +72,7 @@ export function AdminInvitesClient({ people, baseUrl }: AdminInvitesClientProps)
             </Button>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </CollapsibleSection>
   );
 }

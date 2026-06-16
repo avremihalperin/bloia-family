@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { APP_NAME, APP_TAGLINE } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 
 interface BrandLogoProps {
@@ -10,9 +11,9 @@ interface BrandLogoProps {
 }
 
 const sizeMap = {
-  sm: { px: 40, className: "h-10 w-10 rounded-xl" },
-  md: { px: 56, className: "h-14 w-14 rounded-2xl" },
-  lg: { px: 176, className: "h-44 w-44 rounded-3xl" },
+  sm: { px: 40, className: "h-10 w-10 rounded-full" },
+  md: { px: 56, className: "h-14 w-14 rounded-full" },
+  lg: { px: 176, className: "h-44 w-44 rounded-full" },
 };
 
 export function BrandLogo({
@@ -25,10 +26,10 @@ export function BrandLogo({
   const image = (
     <Image
       src="/logo.png"
-      alt="משפחת בלויא — מאגר נתונים משפחתי"
+      alt={`${APP_NAME} — ${APP_TAGLINE}`}
       width={s.px}
       height={s.px}
-      className={cn("object-cover shadow-md", s.className, className)}
+      className={cn("object-cover overflow-hidden", s.className, className)}
       priority={priority}
     />
   );
@@ -51,8 +52,11 @@ interface BrandLogoHeroProps {
 export function BrandLogoHero({ subtitle }: BrandLogoHeroProps) {
   return (
     <div className="flex flex-col items-center text-center">
-      <BrandLogo size="lg" href={null} priority className="shadow-xl shadow-black/25" />
-      {subtitle && <p className="mt-4 text-sm text-stone-400">{subtitle}</p>}
+      <BrandLogo size="lg" href={null} priority className="shadow-lg shadow-black/20" />
+      <h1 className="font-display mt-5 text-3xl font-bold tracking-tight text-[#e8d5a3]">
+        {APP_NAME}
+      </h1>
+      {subtitle && <p className="mt-2 text-sm text-stone-400">{subtitle}</p>}
     </div>
   );
 }
@@ -67,10 +71,10 @@ export function BrandLogoNav({ treeName }: BrandLogoNavProps) {
       <BrandLogo size="sm" href={null} />
       <div>
         <h1 className="font-display text-xl font-bold tracking-tight text-[#e8d5a3]">
-          משפחת בלויא
+          {APP_NAME}
         </h1>
         <p className="text-sm font-medium text-[#c4a055]/90">{treeName}</p>
-        <p className="text-xs tracking-wide text-stone-400">מאגר נתונים משפחתי</p>
+        <p className="text-xs tracking-wide text-stone-400">{APP_TAGLINE}</p>
       </div>
     </Link>
   );

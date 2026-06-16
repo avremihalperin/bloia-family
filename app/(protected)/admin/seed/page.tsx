@@ -1,4 +1,4 @@
-import { createGen1Person, createGen2Person, linkSpouses } from "@/app/actions/family";
+import { createGen1Person, createGen2Person, linkSpouses, unlinkSpouses } from "@/app/actions/family";
 import { getAdminMessages } from "@/app/actions/messages";
 import { getBranches, getPeople } from "@/lib/data";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -17,7 +17,7 @@ export default async function AdminSeedPage() {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       <PageHeader
         title="ניהול עץ המשפחה"
         subtitle="הזנת דור 1-2 ויצירת קישורי הזמנה — גישה למנהל בלבד"
@@ -26,11 +26,13 @@ export default async function AdminSeedPage() {
       <AdminMessagesClient messages={messages} />
 
       <AdminSeedClient
+        people={people}
         gen1People={gen1}
         gen2People={gen2}
         onCreateGen1={createGen1Person}
         onCreateGen2={createGen2Person}
         onLinkSpouses={linkSpouses}
+        onUnlinkSpouses={unlinkSpouses}
       />
       <BranchPhotosClient branches={branches} gen2People={gen2} />
       <AdminFamilyPasswordClient />

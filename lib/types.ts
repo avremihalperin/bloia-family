@@ -1,14 +1,8 @@
-export type Gender = "male" | "female" | "other" | null;
+export type Gender = "male" | "female" | null;
 
-export type FamilyPosition =
-  | "father"
-  | "mother"
-  | "child"
-  | "spouse"
-  | "eldest"
-  | "youngest"
-  | string
-  | null;
+export type MaritalStatus = "single" | "married" | "divorced" | "widowed";
+
+export type FamilyPosition = string | null;
 
 export interface Person {
   id: string;
@@ -20,10 +14,16 @@ export interface Person {
   residence: string | null;
   phone: string | null;
   email: string | null;
+  maiden_name: string | null;
   generation: number | null;
   family_position: FamilyPosition;
   gender: Gender;
+  marital_status?: MaritalStatus | null;
+  honorific?: string | null;
+  is_soldier?: boolean;
+  spouse_name?: string | null;
   parent_id: string | null;
+  parent2_id?: string | null;
   spouse_id: string | null;
   branch_id: string | null;
   created_by: string | null;
@@ -78,9 +78,11 @@ export interface TreeNode {
   id: string;
   name: string;
   nickname: string | null;
+  maiden_name: string | null;
   generation: number | null;
   photo_url: string | null;
-  birthYear: string | null;
+  birthDateGregorian: string | null;
+  birthDateHebrew: string | null;
   familyPhotoUrl?: string | null;
   gender: Gender;
   children: TreeNode[];
@@ -95,7 +97,13 @@ export interface PersonFormData {
   residence?: string;
   phone?: string;
   email?: string;
+  maiden_name?: string;
   family_position?: string;
   gender?: Gender;
+  marital_status?: MaritalStatus | null;
+  honorific?: string;
+  is_soldier?: boolean;
+  spouse_name?: string;
   parent_id?: string;
+  parent2_id?: string;
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { CollapsibleSection } from "@/components/ui/collapsible-section";
 import type { AdminMessage } from "@/lib/types";
 
 function formatDate(value: string) {
@@ -11,19 +12,12 @@ function formatDate(value: string) {
 
 export function AdminMessagesClient({ messages }: { messages: AdminMessage[] }) {
   return (
-    <div className="rounded-2xl border border-[#c4a055]/15 bg-white/60 p-6 shadow-sm">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div>
-          <h3 className="font-display text-lg font-semibold text-[#1a1714]">הודעות מהמשפחה</h3>
-          <p className="text-sm text-stone-500">הודעות שנשלחו מדשבורד המשפחה</p>
-        </div>
-        {messages.length > 0 && (
-          <span className="rounded-full bg-[#c4a055]/15 px-3 py-1 text-sm font-medium text-[#8b6914]">
-            {messages.length}
-          </span>
-        )}
-      </div>
-
+    <CollapsibleSection
+      title="הודעות מהמשפחה"
+      subtitle="הודעות שנשלחו מדשבורד המשפחה"
+      badge={messages.length}
+      defaultOpen={messages.length > 0}
+    >
       {messages.length === 0 ? (
         <p className="text-sm text-stone-500">אין הודעות עדיין</p>
       ) : (
@@ -44,6 +38,6 @@ export function AdminMessagesClient({ messages }: { messages: AdminMessage[] }) 
           ))}
         </div>
       )}
-    </div>
+    </CollapsibleSection>
   );
 }
