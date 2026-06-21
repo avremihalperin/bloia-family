@@ -33,3 +33,18 @@ export function formatPersonHeading(
 export function formatLinkedSpouseName(spouse: Person) {
   return formatSpouseDisplayName(spouse.full_name, spouse.maiden_name);
 }
+
+/** שם נעורים — לנשים נשואות שנכנסו למשפחה בנישואין, לא לבנות משפחה בעץ */
+export function shouldShowMaidenName(
+  person: Pick<Person, "gender" | "marital_status" | "parent_id"> & {
+    /** טופס הוספת ילד/ה למשפחה — אין שם נעורים */
+    isFamilyChildForm?: boolean;
+  }
+): boolean {
+  if (person.isFamilyChildForm) return false;
+  return (
+    person.gender === "female" &&
+    person.marital_status === "married" &&
+    !person.parent_id
+  );
+}

@@ -1,5 +1,5 @@
 import type { Person, TreeNode, Branch } from "@/lib/types";
-import { displayBirthDates } from "@/lib/hebrew-date";
+import { displayBirthDates, getBirthYear } from "@/lib/hebrew-date";
 import { formatDisplayName } from "@/lib/person-display";
 import { sortPeopleByBirthDate } from "@/lib/sort-people";
 
@@ -60,6 +60,18 @@ export function buildTree(people: Person[], branches: Branch[] = []): TreeNode[]
       spousePerson.birth_date_gregorian,
       spousePerson.birth_date_hebrew
     ).hebrew,
+    birthYearHebrew: getBirthYear(
+      spousePerson.birth_date_gregorian,
+      spousePerson.birth_date_hebrew
+    ),
+    deathDateHebrew: displayBirthDates(
+      spousePerson.death_date_gregorian,
+      spousePerson.death_date_hebrew
+    ).hebrew,
+    deathYearHebrew: getBirthYear(
+      spousePerson.death_date_gregorian,
+      spousePerson.death_date_hebrew
+    ),
     gender: spousePerson.gender,
     parent_id: spousePerson.parent_id,
     hasLinkedSpouse: true,
@@ -105,6 +117,18 @@ export function buildTree(people: Person[], branches: Branch[] = []): TreeNode[]
         person.birth_date_gregorian,
         person.birth_date_hebrew
       ).hebrew,
+      birthYearHebrew: getBirthYear(
+        person.birth_date_gregorian,
+        person.birth_date_hebrew
+      ),
+      deathDateHebrew: displayBirthDates(
+        person.death_date_gregorian,
+        person.death_date_hebrew
+      ).hebrew,
+      deathYearHebrew: getBirthYear(
+        person.death_date_gregorian,
+        person.death_date_hebrew
+      ),
       gender: person.gender,
       parent_id: person.parent_id,
       hasLinkedSpouse: Boolean(person.spouse_id),

@@ -10,6 +10,8 @@ export interface Person {
   nickname: string | null;
   birth_date_gregorian: string | null;
   birth_date_hebrew: string | null;
+  death_date_gregorian?: string | null;
+  death_date_hebrew?: string | null;
   photo_url: string | null;
   residence: string | null;
   phone: string | null;
@@ -83,6 +85,9 @@ export interface TreeNode {
   photo_url: string | null;
   birthDateGregorian: string | null;
   birthDateHebrew: string | null;
+  birthYearHebrew?: string | null;
+  deathDateHebrew?: string | null;
+  deathYearHebrew?: string | null;
   familyPhotoUrl?: string | null;
   gender: Gender;
   parent_id?: string | null;

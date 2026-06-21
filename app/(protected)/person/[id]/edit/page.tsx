@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { linkSpouses, unlinkSpouses, linkParentAction, clearParentAction, updatePerson, uploadPhotoForNewPerson } from "@/app/actions/family";
+import { linkSpouses, unlinkSpouses, linkParentAction, clearParentAction, updatePerson, updateDeathDateAction, uploadPhotoForNewPerson } from "@/app/actions/family";
 import { ParentLinker } from "@/components/person/ParentLinker";
+import { DeathDateEditor } from "@/components/person/DeathDateEditor";
 import { getPeople, getPerson } from "@/lib/data";
-import { canEditPerson } from "@/lib/permissions";
+import { canEditPerson, canSetDeathDate } from "@/lib/permissions";
 import { PersonForm } from "@/components/person/PersonForm";
 import { PhotoUpload } from "@/components/person/PhotoUpload";
-import { SpouseLinker } from "@/components/person/SpouseLinker";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { PersonFormData } from "@/lib/types";
@@ -25,6 +25,7 @@ export default async function EditPersonPage({ params }: PageProps) {
   }
 
   const people = await getPeople();
+  const showDeathDate = await canSetDeathDate();
 
   async function handleUpdate(data: PersonFormData, photoFile?: File | null) {
     "use server";
@@ -51,6 +52,14 @@ export default async function EditPersonPage({ params }: PageProps) {
   async function handleUnlinkSpouse() {
     "use server";
     await unlinkSpouses(id);
+  }
+
+  async function handleDeathDate(data: {
+    death_date_gregorian: string | null;
+    death_date_hebrew: string | null;
+  }) {
+    "use server";
+    await updateDeathDateAction(id, data);
   }
 
   return (
@@ -92,20 +101,6 @@ export default async function EditPersonPage({ params }: PageProps) {
         </CardContent>
       </Card>
 
-      <Card id="spouse">
-        <CardHeader>
-          <CardTitle>קישור בן/בת זוג</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <SpouseLinker
-            person={person}
-            people={people}
-            onLink={handleLinkSpouse}
-            onUnlink={handleUnlinkSpouse}
-          />
-        </CardContent>
-      </Card>
-
       <Card>
         <CardHeader>
           <CardTitle>פרטים אישיים</CardTitle>
@@ -113,12 +108,29 @@ export default async function EditPersonPage({ params }: PageProps) {
         <CardContent>
           <PersonForm
             initial={person}
+            people={people}
+            onLinkSpouse={handleLinkSpouse}
+            onUnlinkSpouse={handleUnlinkSpouse}
             onSubmit={handleUpdate}
             submitLabel="שמור שינויים"
             showPhoto={false}
           />
         </CardContent>
       </Card>
+
+      {showDeathDate && (
+        <Card id="death">
+          <CardHeader>
+            <CardTitle>תאריך פטירה</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4 text-sm text-stone-500">
+              שדה זה זמין למנהל בלבד. משמש לתצוגת יארצייט בלוח האירועים.
+            </p>
+            <DeathDateEditor person={person} onSave={handleDeathDate} />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

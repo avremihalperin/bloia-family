@@ -103,11 +103,13 @@ export function getSpouseName(
   person: Pick<Person, "spouse_name">,
   linkedSpouse?: Pick<Person, "full_name" | "maiden_name"> | null
 ): string | null {
+  if (linkedSpouse) {
+    return linkedSpouse.maiden_name
+      ? `${linkedSpouse.full_name} (${linkedSpouse.maiden_name})`
+      : linkedSpouse.full_name;
+  }
   if (person.spouse_name?.trim()) return person.spouse_name.trim();
-  if (!linkedSpouse) return null;
-  return linkedSpouse.maiden_name
-    ? `${linkedSpouse.full_name} (${linkedSpouse.maiden_name})`
-    : linkedSpouse.full_name;
+  return null;
 }
 
 export function formatSpouseLine(

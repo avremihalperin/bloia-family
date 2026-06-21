@@ -3,9 +3,11 @@
 import { useMemo, useState } from "react";
 import { gregorianToHebrew } from "@/lib/hebrew-date";
 import { defaultHonorific, maritalStatusOptions } from "@/lib/honorifics";
+import { shouldShowMaidenName } from "@/lib/person-display";
 import { parentCoupleOptions } from "@/lib/parents";
 import type { Gender, MaritalStatus, Person, PersonFormData } from "@/lib/types";
 import { PhotoPicker } from "@/components/person/PhotoPicker";
+import { SpouseLinker } from "@/components/person/SpouseLinker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +22,12 @@ interface PersonFormProps {
   showPhoto?: boolean;
   /** מאפס את השדות אחרי שמירה מוצלחת (מתאים לטפסי הוספה) */
   resetOnSuccess?: boolean;
+  /** לקישור בן/בת זוג — נדרשים כולם יחד */
+  people?: Person[];
+  onLinkSpouse?: (spouseId: string) => Promise<void>;
+  onUnlinkSpouse?: () => Promise<void>;
+  /** טופס ליצירת פרופיל בן/בת זוג חדש — ללא אזור קישור */
+  creatingSpouse?: boolean;
 }
 
 export function PersonForm({
@@ -30,6 +38,10 @@ export function PersonForm({
   showParentSelect = false,
   showPhoto = true,
   resetOnSuccess = false,
+  people,
+  onLinkSpouse,
+  onUnlinkSpouse,
+  creatingSpouse = false,
 }: PersonFormProps) {
   const [formKey, setFormKey] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -64,6 +76,17 @@ export function PersonForm({
 
   const parentOptions = useMemo(() => parentCoupleOptions(parents), [parents]);
 
+  const showMaidenName = useMemo(
+    () =>
+      shouldShowMaidenName({
+        gender,
+        marital_status: maritalStatus || null,
+        parent_id: initial?.parent_id ?? null,
+        isFamilyChildForm: showParentSelect,
+      }),
+    [gender, maritalStatus, initial?.parent_id, showParentSelect]
+  );
+
   const resetFormFields = () => {
     setGender(initial?.gender ?? null);
     setMaritalStatus(initial?.marital_status ?? "");
@@ -86,13 +109,6 @@ export function PersonForm({
 
     const form = new FormData(e.currentTarget);
     const status = (form.get("marital_status") as MaritalStatus) || undefined;
-    const spouseName = String(form.get("spouse_name") || "").trim();
-
-    if (status === "married" && !spouseName) {
-      setError("נשואים חייבים למלא שם בן/בת זוג");
-      setLoading(false);
-      return;
-    }
 
     const data: PersonFormData = {
       full_name: String(form.get("full_name") || ""),
@@ -102,14 +118,15 @@ export function PersonForm({
       residence: String(form.get("residence") || "") || undefined,
       phone: String(form.get("phone") || "") || undefined,
       email: String(form.get("email") || "") || undefined,
-      maiden_name: String(form.get("maiden_name") || "") || undefined,
+      maiden_name: showMaidenName
+        ? String(form.get("maiden_name") || "") || undefined
+        : undefined,
       family_position: String(form.get("family_position") || "") || undefined,
       gender: (form.get("gender") as Gender) || undefined,
       parent_id: String(form.get("parent_id") || "") || undefined,
       marital_status: status,
       honorific: String(form.get("honorific") || "") || undefined,
       is_soldier: form.get("is_soldier") === "on",
-      spouse_name: spouseName || undefined,
     };
 
     try {
@@ -177,16 +194,20 @@ export function PersonForm({
         </Select>
       </div>
 
-      {maritalStatus === "married" && (
-        <div>
-          <Label htmlFor="spouse_name">שם בן/בת זוג *</Label>
-          <Input
-            id="spouse_name"
-            name="spouse_name"
-            defaultValue={initial?.spouse_name || ""}
-            placeholder={gender === "female" ? "שם בן הזוג" : "שם בת הזוג"}
-            required
-          />
+      {maritalStatus === "married" && !creatingSpouse && (
+        <div id="spouse" className="md:col-span-2">
+          {initial?.id && people && onLinkSpouse && onUnlinkSpouse ? (
+            <SpouseLinker
+              person={initial as Person}
+              people={people}
+              onLink={onLinkSpouse}
+              onUnlink={onUnlinkSpouse}
+            />
+          ) : (
+            <p className="text-sm text-stone-600">
+              לאחר שמירת הפרופיל ניתן יהיה לקשר או להוסיף בן/בת זוג מדף העריכה.
+            </p>
+          )}
         </div>
       )}
 
@@ -219,15 +240,17 @@ export function PersonForm({
         </Label>
       </div>
 
-      <div>
-        <Label htmlFor="maiden_name">שם נעורים</Label>
-        <Input
-          id="maiden_name"
-          name="maiden_name"
-          defaultValue={initial?.maiden_name || ""}
-          placeholder="לתצוגה בקשרי נישואין"
-        />
-      </div>
+      {showMaidenName && (
+        <div>
+          <Label htmlFor="maiden_name">שם נעורים</Label>
+          <Input
+            id="maiden_name"
+            name="maiden_name"
+            defaultValue={initial?.maiden_name || ""}
+            placeholder="לתצוגה בקשרי נישואין"
+          />
+        </div>
+      )}
 
       <div>
         <Label htmlFor="birth_date_gregorian">תאריך לידה (לועזי)</Label>

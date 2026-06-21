@@ -9,6 +9,7 @@ import { createAdminClient, hasAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { isCurrentUserAdmin, getProfile, getPerson } from "@/lib/data";
 import { resolveParentPair } from "@/lib/parents";
+import { canSetDeathDate } from "@/lib/permissions";
 import type { Person, PersonFormData } from "@/lib/types";
 
 function resolveHebrewDate(gregorian?: string, hebrew?: string) {
@@ -33,8 +34,7 @@ function personPayload(data: PersonFormData) {
     marital_status: data.marital_status || null,
     honorific: data.honorific?.trim() || null,
     is_soldier: data.is_soldier ?? false,
-    spouse_name:
-      data.marital_status === "married" ? data.spouse_name?.trim() || null : null,
+    spouse_name: null,
   };
 }
 
@@ -68,7 +68,6 @@ function personToFormData(person: Person): PersonFormData {
     marital_status: person.marital_status ?? undefined,
     honorific: person.honorific ?? undefined,
     is_soldier: person.is_soldier,
-    spouse_name: person.spouse_name ?? undefined,
     parent_id: person.parent_id ?? undefined,
   };
 }
@@ -211,6 +210,65 @@ export async function updatePerson(id: string, data: PersonFormData) {
   revalidatePath("/tree");
   revalidatePath(`/person/${id}`);
   revalidatePath(`/person/${id}/edit`);
+  return person;
+}
+
+export async function updateDeathDateAction(
+  personId: string,
+  data: { death_date_gregorian: string | null; death_date_hebrew: string | null }
+) {
+  if (!(await canSetDeathDate())) {
+    throw new Error("רק מנהל יכול לעדכן תאריך פטירה");
+  }
+
+  const death_date_hebrew = data.death_date_gregorian
+    ? resolveHebrewDate(data.death_date_gregorian, data.death_date_hebrew ?? undefined)
+    : data.death_date_hebrew?.trim() || null;
+
+  const adminToken = await getAdminDbToken();
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (adminToken && (await verifyAdminSession())) {
+    const { data: person, error } = await supabase.rpc(
+      "update_death_dates_via_admin_session",
+      {
+        admin_session_token: adminToken,
+        p_person_id: personId,
+        p_death_date_gregorian: data.death_date_gregorian || null,
+        p_death_date_hebrew: death_date_hebrew,
+      }
+    );
+
+    if (error) throw error;
+    revalidatePath("/");
+    revalidatePath("/tree");
+    revalidatePath(`/person/${personId}`);
+    revalidatePath(`/person/${personId}/edit`);
+    return person;
+  }
+
+  if (!user) {
+    throw new Error("נדרשת התחברות מנהל");
+  }
+
+  const { data: person, error } = await supabase
+    .from("people")
+    .update({
+      death_date_gregorian: data.death_date_gregorian || null,
+      death_date_hebrew: death_date_hebrew,
+    })
+    .eq("id", personId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  revalidatePath("/");
+  revalidatePath("/tree");
+  revalidatePath(`/person/${personId}`);
+  revalidatePath(`/person/${personId}/edit`);
   return person;
 }
 
@@ -523,6 +581,33 @@ export async function addSiblingAction(
     throw new Error("אין הורה משותף — קשר קודם להורה או הוסף ילד דרך ההורה");
   }
   await addChildAction(person.parent_id, data, photoFile);
+}
+
+export async function addSpouseAction(
+  personId: string,
+  data: PersonFormData,
+  photoFile?: File | null
+) {
+  const person = await getPerson(personId);
+  if (!person) throw new Error("לא נמצא");
+
+  const spouse = await createPerson({
+    ...data,
+    marital_status: "married",
+  });
+  if (photoFile) await uploadPhotoForNewPerson(spouse.id, photoFile);
+
+  await linkSpouses(personId, spouse.id);
+
+  if (person.marital_status !== "married") {
+    await updatePerson(personId, {
+      ...personToFormData(person),
+      marital_status: "married",
+    });
+  }
+
+  revalidatePath("/tree");
+  redirect(`/person/${personId}`);
 }
 
 export async function setParentAction(personId: string, parentId: string) {

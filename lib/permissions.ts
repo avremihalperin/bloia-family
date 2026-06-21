@@ -16,3 +16,10 @@ export async function canEditPerson(person: Person): Promise<boolean> {
     person.created_by === profile.id
   );
 }
+
+/** עדכון תאריך פטירה — מנהל מערכת בלבד */
+export async function canSetDeathDate(): Promise<boolean> {
+  if (await verifyAdminSession()) return true;
+  const profile = await getProfile();
+  return Boolean(profile?.is_admin);
+}

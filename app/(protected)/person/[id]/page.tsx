@@ -11,6 +11,7 @@ import {
   genderLabel,
   getSpouseName,
   maritalStatusLabel,
+  shouldShowMaidenName,
 } from "@/lib/person-display";
 import { EditPersonButton } from "@/components/person/EditPersonButton";
 import { BranchPhotoUpload } from "@/components/person/BranchPhotoUpload";
@@ -39,6 +40,10 @@ export default async function PersonPage({ params }: PageProps) {
   const hasAdminSession = await verifyAdminSession();
   const branch = person.branch_id ? await getBranch(person.branch_id) : null;
   const dates = displayBirthDates(person.birth_date_gregorian, person.birth_date_hebrew);
+  const deathDates = displayBirthDates(
+    person.death_date_gregorian,
+    person.death_date_hebrew
+  );
   const canEdit = await canEditPerson(person);
   const displayName = formatDisplayName(person, "full");
   const spouseName = getSpouseName(person, spouse);
@@ -59,7 +64,7 @@ export default async function PersonPage({ params }: PageProps) {
             {person.nickname && (
               <p className="text-stone-500">&quot;{person.nickname}&quot;</p>
             )}
-            {person.maiden_name && (
+            {shouldShowMaidenName(person) && person.maiden_name && (
               <p className="text-stone-500">שם נעורים: {person.maiden_name}</p>
             )}
             <div className="mt-2 flex flex-wrap gap-2">
@@ -86,6 +91,12 @@ export default async function PersonPage({ params }: PageProps) {
           <CardContent className="space-y-2 text-sm">
             {dates.gregorian && <p><strong>תאריך לידה (לועזי):</strong> {dates.gregorian}</p>}
             {dates.hebrew && <p><strong>תאריך לידה (עברי):</strong> {dates.hebrew}</p>}
+            {deathDates.gregorian && (
+              <p><strong>תאריך פטירה (לועזי):</strong> {deathDates.gregorian}</p>
+            )}
+            {deathDates.hebrew && (
+              <p><strong>תאריך פטירה (עברי):</strong> {deathDates.hebrew}</p>
+            )}
             {person.residence && <p><strong>מגורים:</strong> {person.residence}</p>}
             {person.phone && (
               <p>

@@ -178,7 +178,7 @@ export function buildUpcomingEvents(people: Person[], fromDate = new Date()): Up
       person,
       fromHd,
       "yahrzeit",
-      (person as Person & { death_date_gregorian?: string | null }).death_date_gregorian,
+      person.death_date_gregorian,
       "יארצייט",
       "yahrzeit"
     );

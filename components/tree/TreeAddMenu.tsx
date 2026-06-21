@@ -38,6 +38,11 @@ function menuItems(node: TreeNode): MenuItem[] {
       href: `/person/${node.id}/edit#spouse`,
       show: true,
     },
+    {
+      label: "הוסף בן/בת זוג",
+      href: `/person/${node.id}/add-spouse`,
+      show: !node.hasLinkedSpouse,
+    },
   ].filter((item) => item.show);
 }
 

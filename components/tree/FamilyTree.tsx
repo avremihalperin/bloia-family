@@ -30,7 +30,7 @@ const GAP = 40; // gap-10 @ 16px — בין אחים
 const COUPLE_GAP = 24; // gap-6 @ 16px — בין בני זוג
 const DROP = 24; // h-6 @ 16px
 const CARD_WIDTH_CLASS = "w-44";
-const CARD_HEIGHT_CLASS = "h-[168px]";
+const CARD_HEIGHT_CLASS = "min-h-[200px]";
 const COUPLE_GAP_CLASS = "gap-6";
 const COUPLE_BOTTOM_PAD_CLASS = "pb-6";
 /** מרכז האווטאר בכרטיס: padding-top (16) + חצי גובה אווטאר md (24) */
@@ -207,9 +207,9 @@ function ChildrenBranch({
   return (
     <div className="flex flex-col items-center" dir="ltr">
       <ChildrenConnector count={children.length} branchOnly={branchOnly} />
-      <div className="flex items-start gap-10" style={{ width: rowWidth }}>
+      <div className="flex items-stretch gap-10" style={{ width: rowWidth }}>
         {children.map((child) => (
-          <div key={child.id} className={cn("shrink-0", CARD_WIDTH_CLASS)}>
+          <div key={child.id} className={cn("h-full shrink-0", CARD_WIDTH_CLASS)}>
             <TreeNodeUnit
               node={child}
               showWomenPhotos={showWomenPhotos}
@@ -221,6 +221,21 @@ function ChildrenBranch({
         ))}
       </div>
     </div>
+  );
+}
+
+function TreeDateLine({
+  prefix,
+  value,
+}: {
+  prefix: "לידה:" | "פטירה:";
+  value: string;
+}) {
+  return (
+    <p className="flex min-h-[1.375rem] w-full items-start justify-center gap-1 text-[10px] leading-snug text-stone-600">
+      <span className="w-10 shrink-0 text-end font-medium text-stone-400">{prefix}</span>
+      <span className="min-w-0 flex-1 text-start">{value}</span>
+    </p>
   );
 }
 
@@ -239,9 +254,11 @@ function PersonCard({
     node.birthDateGregorian,
     showWomenPhotos
   );
+  const birthText = node.birthDateHebrew;
+  const deathText = node.deathDateHebrew;
 
   return (
-    <div className={cn("relative z-10 shrink-0", CARD_WIDTH_CLASS)}>
+    <div className={cn("relative z-10 h-full shrink-0", CARD_WIDTH_CLASS)}>
       {canEdit && (
         <>
           <TreeAddMenu node={node} />
@@ -252,14 +269,14 @@ function PersonCard({
         href={`/person/${node.id}`}
         dir="rtl"
         className={cn(
-          "group flex flex-col items-center rounded-2xl p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg",
+          "group flex h-full flex-col items-center rounded-2xl p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg",
           CARD_WIDTH_CLASS,
           CARD_HEIGHT_CLASS,
           genderCardClasses(node.gender)
         )}
       >
         <Avatar name={node.name} photoUrl={photoUrl} size="md" gender={node.gender} />
-        <div className="mt-2.5 flex w-full min-h-0 flex-1 flex-col items-center">
+        <div className="mt-2 flex w-full flex-1 flex-col items-center gap-1">
           <p
             className={cn(
               "line-clamp-2 w-full text-center text-sm leading-snug",
@@ -268,12 +285,15 @@ function PersonCard({
           >
             {node.name}
           </p>
-          <p className="mt-1 line-clamp-1 h-4 w-full text-center text-xs text-stone-400">
-            {node.nickname ? `"${node.nickname}"` : "\u00a0"}
-          </p>
-          <p className="mt-0.5 line-clamp-1 h-4 w-full text-center text-[11px] leading-snug text-stone-500">
-            {node.birthDateHebrew ?? "\u00a0"}
-          </p>
+          {node.nickname && (
+            <p className="line-clamp-1 w-full text-center text-xs text-stone-400">
+              &quot;{node.nickname}&quot;
+            </p>
+          )}
+          <div className="mt-auto w-full pt-1">
+            {birthText && <TreeDateLine prefix="לידה:" value={birthText} />}
+            {deathText && <TreeDateLine prefix="פטירה:" value={deathText} />}
+          </div>
         </div>
       </Link>
     </div>
@@ -345,7 +365,7 @@ function TreeNodeUnit({
     <div className="flex flex-col items-center" dir="ltr">
       <div
         className={cn(
-          "relative flex items-start",
+          "relative flex items-stretch",
           hasChildren && COUPLE_BOTTOM_PAD_CLASS,
           spouse && COUPLE_GAP_CLASS
         )}
